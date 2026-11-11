@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expediente de Evaluación - {{ personaje.usuario.get_full_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- KaTeX CSS y JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary mb-4 shadow-sm">
+        <div class="container">
+            <span class="navbar-brand fw-bold"><i class="bi bi-journal-check me-2"></i> Expediente del Alumno</span>
+            <a href="{% url 'profesor_panel' %}" class="btn btn-sm btn-outline-light"><i class="bi bi-arrow-left"></i> Volver al Panel Docente</a>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        
+        <!-- RESUMEN ALUMNO -->
+        <div class="card p-4 shadow-sm mb-4 bg-white border-0">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white p-3 rounded-circle fs-1 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                        <i class="bi {{ personaje.avatar }}"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">{{ personaje.usuario.first_name }} {{ personaje.usuario.last_name }}</h4>
+                        <small class="text-muted">Usuario: {{ personaje.usuario.username }} | Grupo: {{ personaje.clase.nombre|default:"Sin Clase" }}</small>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 text-center">
+                    <div class="p-2 border rounded bg-light px-3">
+                        <small class="text-muted d-block">Saldo</small>
+                        <strong class="text-success fs-5">{{ personaje.dinero_disponible }}€</strong>
+                    </div>
+                    <div class="p-2 border rounded bg-light px-3">
+                        <small class="text-muted d-block">Salud</small>
+                        <strong class="text-danger fs-5">{{ personaje.salud }}%</strong>
+                    </div>
+                    <div class="p-2 border rounded bg-light px-3">
+                        <small class="text-muted d-block">Felicidad</small>
+                        <strong class="text-warning fs-5">{{ personaje.felicidad }}%</strong>
+                    </div>
+                    <div class="p-2 border rounded bg-light px-3">
+                        <small class="text-muted d-block">% Acierto Retos</small>
+                        <strong class="text-primary fs-5">{{ porcentaje_acierto }}%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- DECISIONES DE PRESUPUESTO ACTUAL -->
+            <div class="col-12 col-md-5">
+                <div class="card p-4 shadow-sm bg-white border-0 h-100">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-sliders me-2 text-primary"></i> Decisiones de Presupuesto</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Alimentación:</span>
+                            <strong>{{ personaje.get_nivel_comida_display }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Vivienda / Suministros:</span>
+                            <strong>{{ personaje.get_nivel_vivienda_display }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Transporte:</span>
+                            <strong>{{ personaje.get_nivel_transporte_display }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Ocio:</span>
+                            <strong>{{ personaje.get_nivel_ocio_display }}</strong>
+                        </li>
+                    </ul>
+                    <div class="p-3 bg-light rounded border mt-3 text-center">
+                        <small class="text-muted">Gasto Fijo Semanal Elegido:</small>
+                        <h5 class="fw-bold text-primary mb-0">{{ personaje.obtener_coste_presupuesto }} €</h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVALUACIÓN DE RETOS FINANCIEROS Y MATEMÁTICOS -->
+            <div class="col-12 col-md-7">
+                <div class="card p-4 shadow-sm bg-white border-0 h-100">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-check2-circle me-2 text-success"></i> Desempeño en Retos Matemáticos</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Imprevisto / Narrativa</th>
+                                    <th>Estado</th>
+                                    <th>Resultado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in retos_enfrentados %}
+                                    <tr>
+                                        <td class="small text-muted">{{ r.fecha|date:"d/m H:i" }}</td>
+                                        <td class="fw-bold small">{{ r.titulo_narrativo|default:r.evento.temario }}</td>
+                                        <td>
+                                            {% if r.resuelto %}
+                                                <span class="badge bg-secondary">Resuelto</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">Pendiente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if r.resuelto %}
+                                                {% if r.exito_reto %}
+                                                    <span class="badge bg-success">Correcto (Mitigado)</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Incorrecto</span>
+                                                {% endif %}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="4" class="text-center text-muted">Aún no ha enfrentado retos.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIARIO DE OPERACIONES -->
+        <div class="card p-4 shadow-sm bg-white border-0">
+            <h5 class="fw-bold mb-3"><i class="bi bi-journal-text me-2"></i> Diario de Operaciones (Auditoría)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Detalle de Operación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in transacciones %}
+                            <tr>
+                                <td class="small text-muted">{{ t.fecha|date:"d/m H:i" }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ t.get_tipo_display }}</span></td>
+                                <td class="fw-bold">{{ t.concepto }}</td>
+                                <td class="fw-bold {% if t.monto >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {% if t.monto >= 0 %}+{% endif %}{{ t.monto }} €
+                                </td>
+                                <td class="small text-muted">{{ t.explicacion_operacion|default:"-" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">Sin movimientos registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+        }
+    });
+</script>
+</body>
+</html>

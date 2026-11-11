@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Docente - EduFinanzas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .micro { font-size: 0.75rem; }
+    </style>
+    <!-- KaTeX CSS y JS --> 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body class="bg-light">
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark bg-primary mb-4 shadow-sm">
+        <div class="container">
+            <span class="navbar-brand fw-bold"><i class="bi bi-person-workspace me-2"></i> Panel de Gestión Docente</span>
+            <div class="d-flex align-items-center gap-2">
+                <label class="form-label micro fw-bold text-muted mb-0">Clase Activa:</label>
+                <select class="form-select form-select-sm fw-bold border-primary" style="min-width: 200px;" onchange="location = this.value;">
+                    {% for c in clases %}
+                        <option value="?clase_id={{ c.id }}" {% if clase_seleccionada and clase_seleccionada.id == c.id %}selected{% endif %}>
+                            {{ c.nombre }} ({{ c.personaje_set.count }} alumnos)
+                        </option>
+                    {% empty %}
+                        <option value="">No tienes clases creadas</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCrearClase">
+                    <i class="bi bi-plus-circle me-1"></i> Nueva Clase
+                </button>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'banco_recursos' %}" class="btn btn-sm btn-warning fw-bold"><i class="bi bi-journal-bookmark-fill me-1"></i> Banco de Recursos</a>
+                <a href="{% url 'tienda_cartas' %}" class="btn btn-sm btn-outline-light fw-bold shadow-sm"><i class="bi bi-shop me-1"></i> Tienda de Recompensas</a>
+                <a href="/?demo=1" class="btn btn-sm btn-outline-light"><i class="bi bi-eye me-1"></i> Vista Alumno</a>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-danger"><i class="bi bi-box-arrow-right"></i> Salir</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <!-- MENSAJES DE ALERTA -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- BOTÓN ACCIÓN SEMANAL -->
+        <div class="card p-4 shadow-sm mb-4 border-0 bg-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-primary"><i class="bi bi-calendar-check me-2"></i> Control de Ciclo Semanal</h5>
+                    <p class="small text-muted mb-0">Al ejecutar el fin de semana se ingresarán las nóminas, se cobrarán presupuestos e intereses del 2%.</p>
+                </div>
+                <form method="POST" action="{% url 'pagar_salarios' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="clase_id" value="{{ clase_seleccionada.id }}"> 
+                    <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm" onclick="return confirm('¿Ejecutar el fin de semana para todos los alumnos?');">
+                        <i class="bi bi-play-fill me-1"></i> Procesar Ciclo Semanal
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% if clase_seleccionada %}
+        <!-- TABLA DE ALUMNOS -->
+        <div class="card p-4 shadow-sm mb-4 border-0 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-people me-2 text-primary"></i> Alumnos de {{ clase_seleccionada.nombre }}</h5>
+                
+                <button class="btn btn-sm btn-success fw-bold micro" data-bs-toggle="modal" data-bs-target="#modalAgregarAlumno">
+                    <i class="bi bi-person-plus me-1"></i> Asignar Alumno a esta Clase
+                </button>
+                
+            </div>
+            <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
+                <span class="badge bg-secondary">{{ personajes.count }} Alumnos</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre y Apellidos</th>
+                            <th>Grupo</th>
+                            <th>Sueldo Base (Ascensos)</th>
+                            <th>Cuenta Corriente</th>
+                            <th>Salud</th>
+                            <th>Felicidad</th>
+                            <th>Presupuesto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in personajes %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ p.usuario.first_name }} {{ p.usuario.last_name }}</div>
+                                    <small class="text-muted">@{{ p.usuario.username }}</small>
+                                </td>
+                                <td><span class="badge bg-info text-dark">{{ p.clase.nombre|default:"Sin Clase" }}</span></td>
+                                
+                                <td>
+                                    <form method="POST" action="{% url 'cambiar_salario_alumno' p.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="clase_id" value="{{ clase_seleccionada.id }}">
+                                        <select name="nuevo_salario" class="form-select form-select-sm fw-bold {% if p.salario_semanal > 150.00 %}text-success{% elif p.salario_semanal < 150.00 %}text-danger{% else %}text-primary{% endif %}" onchange="this.form.submit()">
+                                            <option value="75.00" {% if p.salario_semanal == 75.00 %}selected{% endif %}>75€ (Penalización Alta)</option>
+                                            <option value="125.00" {% if p.salario_semanal == 125.00 %}selected{% endif %}>125€ (Penalización Leve)</option>
+                                            <option value="150.00" {% if p.salario_semanal == 150.00 %}selected{% endif %}>150€ (Sueldo Base)</option>
+                                            <option value="175.00" {% if p.salario_semanal == 175.00 %}selected{% endif %}>175€ (Ascenso +1)</option>
+                                            <option value="300.00" {% if p.salario_semanal == 300.00 %}selected{% endif %}>300€ (Ascenso +2)</option>
+                                        </select>
+                                    </form>
+                                </td>
+
+                                <td class="fw-bold">
+                                    {{ p.dinero_disponible }} € 
+                                    <span class="small {% if p.var_dinero > 0 %}text-success{% elif p.var_dinero < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                        ({% if p.var_dinero > 0 %}+{% endif %}{{ p.var_dinero }}€)
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ p.salud }}% 
+                                    <span class="small {% if p.var_salud > 0 %}text-success{% elif p.var_salud < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                        ({% if p.var_salud > 0 %}+{% endif %}{{ p.var_salud }}%)
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ p.felicidad }}% 
+                                    <span class="small {% if p.var_felicidad > 0 %}text-success{% elif p.var_felicidad < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                        ({% if p.var_felicidad > 0 %}+{% endif %}{{ p.var_felicidad }}%)
+                                    </span>
+                                </td>
+
+                                <td><small class="fw-bold text-primary">{{ p.obtener_coste_presupuesto }} €/sem</small></td>
+                                <td>
+                                    <a href="{% url 'profesor_detalle_alumno' p.id %}" class="btn btn-sm btn-outline-primary fw-bold">
+                                        <i class="bi bi-journal-check me-1"></i> Historial
+                                    </a>
+                                    <a href="{% url 'quitar_alumno_de_clase' p.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Quitar a este alumno de la clase?')">
+                                        <i class="bi bi-person-x"></i> Desvincular
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="8" class="text-center text-muted">Aún no hay alumnos inscritos.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+            <div class="alert alert-info text-center py-5">
+                <h5>No tienes ninguna clase configurada</h5>
+                <p class="small text-muted mb-3">Crea tu primera clase para organizar a los alumnos y consultar sus avances.</p>
+                <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearClase">Crear mi Primera Clase</button>
+            </div>
+        {% endif %}
+
+        <!-- HERRAMIENTAS DOCENTES EN CLASE -->
+        <div class="card p-4 shadow-sm border-0 bg-white">
+            <h5 class="fw-bold mb-3"><i class="bi bi-tools text-primary me-2"></i> Operaciones en el Aula</h5>
+            
+            <ul class="nav nav-tabs mb-4" id="docenteTabs" role="tablist">
+                
+                <li class="nav-item">
+                    <button class="nav-link active fw-bold" id="lanzar-tab" data-bs-toggle="tab" data-bs-target="#lanzar-pane" type="button" role="tab">
+                        <i class="bi bi-send me-1"></i> Entregar Tarjeta / Reto
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold  text-danger" id="revisiones-tab" data-bs-toggle="tab" data-bs-target="#revisiones-pane" type="button" role="tab">
+                        <i class="bi bi-inbox me-1"></i> Revisiones Pendientes
+                        {% if revisiones_pendientes.count > 0 %}
+                            <span class="badge bg-danger rounded-pill">{{ revisiones_pendientes.count }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" id="alumnos-tab" data-bs-toggle="tab" data-bs-target="#alumnos-pane" type="button" role="tab">
+                        <i class="bi bi-person-plus me-1"></i> Crear Alumnos / Grupos
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" id="masivo-tab" data-bs-toggle="tab" data-bs-target="#masivo-pane" type="button" role="tab">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Alta Masiva
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold text-success" id="cartas-tab" data-bs-toggle="tab" data-bs-target="#cartas-pane" type="button">
+                        <i class="bi bi-card-heading me-1"></i> Cartas en Posesión de Alumnos
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="docenteTabsContent">
+                
+                <!-- PESTAÑA: ENTREGAR MATERIAL CON FILTROS DE CLASE -->
+                <div class="tab-pane fade show active" id="lanzar-pane" role="tabpanel">
+                    
+                    <!-- BARRA DE FILTRADO RÁPIDO -->
+                    <form method="GET" action="{% url 'profesor_panel' %}" class="row g-2 mb-4 p-3 bg-light rounded border align-items-center">
+                        <input type="hidden" name="clase_id" value="{{ clase_seleccionada.id }}">
+                        <div class="col-12 col-md-3">
+                            <label class="form-label micro fw-bold text-muted mb-1">Filtrar Curso:</label>
+                            <select name="curso" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">-- Todos los Cursos --</option>
+                                <option value="1_ESO" {% if request.GET.curso == '1_ESO' %}selected{% endif %}>1º ESO</option>
+                                <option value="2_ESO" {% if request.GET.curso == '2_ESO' %}selected{% endif %}>2º ESO</option>
+                                <option value="3_ESO" {% if request.GET.curso == '3_ESO' %}selected{% endif %}>3º ESO</option>
+                                <option value="4_ESO" {% if request.GET.curso == '4_ESO' %}selected{% endif %}>4º ESO</option>
+                                <option value="BACH" {% if request.GET.curso == 'BACH' %}selected{% endif %}>Bachillerato</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label micro fw-bold text-muted mb-1">Dificultad:</label>
+                            <select name="dificultad" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">-- Toda Dificultad --</option>
+                                <option value="FACIL" {% if request.GET.dificultad == 'FACIL' %}selected{% endif %}>Fácil</option>
+                                <option value="MEDIO" {% if request.GET.dificultad == 'MEDIO' %}selected{% endif %}>Medio</option>
+                                <option value="DIFICIL" {% if request.GET.dificultad == 'DIFICIL' %}selected{% endif %}>Difícil</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label micro fw-bold text-muted mb-1">Buscar por Temario:</label>
+                            <input type="text" name="temario" class="form-control form-control-sm" placeholder="Ej: Porcentajes, Ahorro..." value="{{ request.GET.temario }}">
+                        </div>
+                        <div class="col-12 col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold"><i class="bi bi-search me-1"></i> Filtrar</button>
+                        </div>
+                    </form>
+
+                    <div class="row g-4">
+                        <!-- Entregar Tarjeta -->
+                        <div class="col-12 col-md-6">
+                            <div class="p-3 border rounded bg-light h-100">
+                                <h6 class="fw-bold mb-2 text-warning"><i class="bi bi-award me-1"></i> Asignar Tarjeta de Recompensa</h6>
+                                <form method="POST" action="{% url 'entregar_tarjeta' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="clase_id" value="{{ clase_seleccionada.id }}">
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Alumno Destinatario:</label>
+                                        <select name="personaje_id" class="form-select form-select-sm" required>
+                                            <option value="TODOS">-- Toda la Clase --</option>
+                                            {% for p in personajes %}
+                                                <option value="{{ p.id }}">{{ p.usuario.first_name }} {{ p.usuario.last_name }} (@{{ p.usuario.username }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Tarjeta a entregar:</label>
+                                        <select name="tarjeta_id" class="form-select form-select-sm" required>
+                                            {% for t in tarjetas %}
+                                                <option value="{{ t.id }}">
+                                                    [{{ t.get_curso_display }} | {{ t.temario }}] {{ t.nombre }} (+{{ t.efecto_dinero }}€)
+                                                </option>
+                                            {% empty %}
+                                                <option value="">No hay tarjetas que coincidan con el filtro</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold shadow-sm">
+                                        <i class="bi bi-send-fill me-1"></i> Entregar Tarjeta
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Lanzar Reto -->
+                        <div class="col-12 col-md-6">
+                            <div class="p-3 border rounded bg-light h-100">
+                                <h6 class="fw-bold mb-2 text-danger"><i class="bi bi-lightning me-1"></i> Lanzar Imprevisto / Reto</h6>
+                                <form method="POST" action="{% url 'lanzar_evento_clase' %}">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <input type="hidden" name="clase_id" value="{{ clase_seleccionada.id }}">
+                                        <label class="form-label small fw-bold">Alumno Destinatario:</label>
+                                        <select name="personaje_id" class="form-select form-select-sm" required>
+                                            <option value="TODOS">-- Toda la Clase --</option>
+                                            {% for p in personajes %}
+                                                <option value="{{ p.id }}">{{ p.usuario.first_name }} {{ p.usuario.last_name }} (@{{ p.usuario.username }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Reto a enviar:</label>
+                                        <select name="evento_id" class="form-select form-select-sm" required>
+                                            <!-- SE ELIMINA LA OPCIÓN DINÁMICA DE AQUÍ -->
+                                            {% for e in eventos %}
+                                                <option value="{{ e.id }}">
+                                                    [{{ e.get_curso_display }} | {{ e.temario }}] {{ e.pregunta_matematica|truncatechars:45 }} (-{{ e.penalizacion_dinero }}€)
+                                                </option>
+                                            {% empty %}
+                                                <option value="">No hay retos disponibles en el banco</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold shadow-sm">
+                                        <i class="bi bi-lightning-charge-fill me-1"></i> Enviar Reto
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA: IMPUGNACIONES Y SOLICITUDES DE ALUMNOS --> 
+                <div class="tab-pane fade" id="revisiones-pane" role="tabpanel">
+                    <div class="p-3 border rounded bg-light">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-shield-exclamation text-warning me-2"></i> Impugnaciones y Solicitudes de Alumnos</h6>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle bg-white rounded">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Alumno</th>
+                                        <th>Pregunta / Reto</th>
+                                        <th>Respuesta Enviada vs Correcta</th>
+                                        <th>Motivo del Alumno</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rev in revisiones_pendientes %}
+                                        <tr>
+                                            <td class="fw-bold">{{ rev.personaje.usuario.get_full_name }}</td>
+                                            <td class="small">{{ rev.evento.pregunta_matematica }}</td>
+                                            <td class="small">
+                                                <div class="text-danger">Enviada: <strong>{{ rev.respuesta_enviada }}</strong></div>
+                                                <div class="text-success">Esperada: <strong>{{ rev.evento.respuesta_correcta }}</strong></div>
+                                            </td>
+                                            <td class="small text-muted"><em>"{{ rev.motivo_impugnacion }}"</em></td>
+                                            <td>
+                                                <div class="d-flex gap-1">
+                                                    <form method="POST" action="{% url 'resolver_impugnacion' rev.id %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="accion" value="APROBAR">
+                                                        <button type="submit" class="btn btn-sm btn-success fw-bold"><i class="bi bi-check-lg"></i> Aprobar</button>
+                                                    </form>
+                                                    <form method="POST" action="{% url 'resolver_impugnacion' rev.id %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="accion" value="RECHAZAR">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-bold"><i class="bi bi-x-lg"></i> Rechazar</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="5" class="text-center text-muted py-3">No hay solicitudes de revisión pendientes.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA: ALUMNOS Y GRUPOS -->
+                <div class="tab-pane fade" id="alumnos-pane" role="tabpanel">
+                    <div class="row g-4">
+                        <div class="col-12 col-md-5">
+                            <div class="p-3 border rounded bg-light">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-folder me-1"></i> Crear Nuevo Grupo/Clase</h6>
+                                <form method="POST" action="{% url 'crear_clase' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="clase_id" value="{{ clase_seleccionada.id }}">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" name="nombre_clase" class="form-control" placeholder="Ej: 1º ESO A" required>
+                                        <button type="submit" class="btn btn-primary fw-bold">Crear Grupo</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-7">
+                            <div class="p-3 border rounded bg-light">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-person-fill-plus me-1"></i> Registrar Alumno Individual</h6>
+                                <form method="POST" action="{% url 'crear_alumno' %}">
+                                    {% csrf_token %}
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6"><input type="text" name="first_name" class="form-control form-control-sm" placeholder="Nombre" required></div>
+                                        <div class="col-6"><input type="text" name="last_name" class="form-control form-control-sm" placeholder="Apellidos" required></div>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6"><input type="email" name="email" class="form-control form-control-sm" placeholder="Correo Electrónico"></div>
+                                        <div class="col-6"><input type="text" name="username" class="form-control form-control-sm" placeholder="Usuario (Login)" required></div>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6"><input type="password" name="password" class="form-control form-control-sm" placeholder="Contraseña" required></div>
+                                        <div class="col-6">
+                                            <select name="clase_id" class="form-select form-select-sm" required>
+                                                <option value="">-- Grupo --</option>
+                                                {% for c in clases %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Inscribir Alumno</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA: ALTA MASIVA -->
+                <div class="tab-pane fade" id="masivo-pane" role="tabpanel">
+                    <div class="p-3 border rounded bg-light">
+                        <h6 class="fw-bold mb-2"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Importación Masiva de Alumnos</h6>
+                        <p class="small text-muted mb-3">Formato por línea: <code>Nombre;Apellidos;Correo;Usuario;Contraseña</code></p>
+                        
+                        <form method="POST" action="{% url 'crear_alumnos_masivo' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <select name="clase_id" class="form-select form-select-sm" required>
+                                    <option value="">-- Seleccionar Grupo --</option>
+                                    {% for c in clases %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Opción A: Subir archivo CSV / Texto (.txt, .csv)</label>
+                                <input type="file" name="archivo_csv" class="form-control form-control-sm" accept=".csv, .txt">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Opción B: Pegar datos de texto</label>
+                                <textarea name="datos_masivos" class="form-control form-control-sm" rows="3" placeholder="Juan;Pérez;juan@escuela.com;juanp;123456"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-sm fw-bold"><i class="bi bi-upload me-1"></i> Procesar Registro Masivo</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- PESTAÑA EN EL PANEL DEL PROFESOR -->
+                <div class="tab-pane fade" id="cartas-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-check2-square text-success me-2"></i>Canje de Cartas en Aula</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light micro">
+                                        <tr>
+                                            <th>Alumno</th>
+                                            <th>Carta Comprada</th>
+                                            <th>Precio Pagado</th>
+                                            <th>Fecha Compra</th>
+                                            <th class="text-end">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="micro">
+                                        {% for p in personajes %}
+                                            {% for ca in p.cartas_compradas.all %}
+                                                {% if ca.estado == 'ACTIVA' %}
+                                                    <tr>
+                                                        <td class="fw-bold">{{ p.usuario.get_full_name|default:p.usuario.username }}</td>
+                                                        <td><span class="badge bg-primary">{{ ca.carta.titulo }}</span></td>
+                                                        <td class="fw-bold text-success">{{ ca.precio_pagado }} €</td>
+                                                        <td class="text-muted">{{ ca.fecha_compra|date:"d/m/Y H:i" }}</td>
+                                                        <td class="text-end">
+                                                            <form method="POST" action="{% url 'usar_carta_profesor' ca.id %}" class="d-inline">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn btn-sm btn-success fw-bold" onclick="return confirm('¿Confirmar que el alumno usó esta carta en clase?')">
+                                                                    <i class="bi bi-box-arrow-up-right me-1"></i> Usar / Canjear
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="5" class="text-center py-4 text-muted">Ningún alumno de esta clase tiene cartas sin usar.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    <!-- MODAL: ASIGNAR ALUMNO REGISTRADO A LA CLASE ACTIVA -->
+    {% if clase_seleccionada %}
+    <div class="modal fade" id="modalAgregarAlumno" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'agregar_alumno_a_clase' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="clase_id" value="{{ clase_seleccionada.id }}">
+                    <div class="modal-header bg-success text-white">
+                        <h6 class="modal-title fw-bold">Asignar Alumno a {{ clase_seleccionada.nombre }}</h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label micro fw-bold text-muted">Selecciona un alumno sin clase asignada:</label>
+                        <select name="personaje_id" class="form-select form-select-sm mb-3" required>
+                            <option value="">-- Seleccionar Alumno --</option>
+                            {% for a in alumnos_disponibles %}
+                                <option value="{{ a.id }}">{{ a.usuario.get_full_name|default:a.usuario.username }} ({{ a.usuario.email }})</option>
+                            {% empty %}
+                                <option value="" disabled>No hay alumnos sin clase disponibles</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-sm btn-success fw-bold" {% if not alumnos_disponibles %}disabled{% endif %}>Asignar a Clase</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof renderMathInElement === 'function') {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+        });
+    </script>
+</body>
+</html>

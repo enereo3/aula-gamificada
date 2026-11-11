@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco de Recursos Pedagógicos - EduFinanzas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .micro { font-size: 0.75rem; }
+    </style>
+    <!-- KaTeX CSS y JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body class="bg-light">
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark bg-dark mb-4 shadow-sm">
+        <div class="container">
+            <span class="navbar-brand fw-bold text-warning">
+                <i class="bi bi-journal-bookmark-fill me-2"></i> Banco de Recursos Pedagógicos
+            </span>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'profesor_panel' %}" class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-arrow-left me-1"></i> Volver al Panel Docente
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-danger"><i class="bi bi-box-arrow-right"></i> Salir</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+
+        <!-- MENSAJES DE ALERTA -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- CABECERA Y FILTRADO GLOBAL -->
+        <div class="card p-4 shadow-sm border-0 bg-white mb-4">
+            <h5 class="fw-bold text-primary mb-3"><i class="bi bi-funnel me-2"></i> Buscador y Filtros del Repositorio</h5>
+            <form method="GET" action="{% url 'banco_recursos' %}" class="row g-3">
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold text-muted">Curso:</label>
+                    <select name="curso" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">-- Todos los Cursos --</option>
+                        <option value="1_ESO" {% if request.GET.curso == '1_ESO' %}selected{% endif %}>1º ESO</option>
+                        <option value="2_ESO" {% if request.GET.curso == '2_ESO' %}selected{% endif %}>2º ESO</option>
+                        <option value="3_ESO" {% if request.GET.curso == '3_ESO' %}selected{% endif %}>3º ESO</option>
+                        <option value="4_ESO" {% if request.GET.curso == '4_ESO' %}selected{% endif %}>4º ESO</option>
+                        <option value="BACH" {% if request.GET.curso == 'BACH' %}selected{% endif %}>Bachillerato</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold text-muted">Dificultad:</label>
+                    <select name="dificultad" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">-- Todas las Dificultades --</option>
+                        <option value="FACIL" {% if request.GET.dificultad == 'FACIL' %}selected{% endif %}>Fácil</option>
+                        <option value="MEDIO" {% if request.GET.dificultad == 'MEDIO' %}selected{% endif %}>Medio</option>
+                        <option value="DIFICIL" {% if request.GET.dificultad == 'DIFICIL' %}selected{% endif %}>Difícil</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-bold text-muted">Búsqueda por palabra / tema:</label>
+                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Ej: Porcentajes, Regla de 3..." value="{{ request.GET.q }}">
+                </div>
+                <div class="col-12 col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold"><i class="bi bi-search me-1"></i> Buscar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- PESTAÑAS PRINCIPALES DEL BANCO -->
+        <ul class="nav nav-pills mb-4" id="bancoTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active fw-bold" id="retos-tab" data-bs-toggle="pill" data-bs-target="#retos-pane" type="button" role="tab">
+                    <i class="bi bi-lightning-charge me-1"></i> Banco de Retos y Actividades ({{ eventos_list.count }})
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold" id="tarjetas-tab" data-bs-toggle="pill" data-bs-target="#tarjetas-pane" type="button" role="tab">
+                    <i class="bi bi-award me-1"></i> Tarjetas de Recompensa ({{ tarjetas.count }})
+                </button>
+            </li>
+            <li class="nav-item ms-auto">
+                <button class="nav-link bg-success text-white fw-bold" id="nuevo-tab" data-bs-toggle="pill" data-bs-target="#nuevo-pane" type="button" role="tab">
+                    <i class="bi bi-plus-lg me-1"></i> Añadir Nuevo Recurso
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="bancoTabsContent">
+
+            <!-- PESTAÑA 1: BANCO DE RETOS (PEDAGÓGICO / SIN NARRATIVA) -->
+            <div class="tab-pane fade show active" id="retos-pane" role="tabpanel">
+                <div class="row row-cols-1 row-cols-md-3 g-3">
+                    {% for e in eventos %}
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-danger">{{ e.get_curso_display }}</span>
+                                            <span class="badge bg-outline-dark border text-dark">{{ e.get_dificultad_display }}</span>
+                                        </div>
+                                        <h6 class="fw-bold text-dark mb-1"><i class="bi bi-book me-1"></i> Tema: {{ e.temario }}</h6>
+
+                                        <div class="p-2 rounded bg-light border small my-3">
+                                            {% if e.tipo_respuesta == 'NUMERICA' %}
+                                                <span class="badge bg-primary mb-1">Numérica (Autocorregible)</span>
+                                                <div><strong>Pregunta:</strong> {{ e.pregunta_matematica }}</div>
+                                                <div><strong>Respuesta:</strong> <span class="text-success fw-bold">{{ e.respuesta_correcta }}</span></div>
+                                            {% elif e.tipo_respuesta == 'TEST' %}
+                                                <span class="badge bg-warning text-dark mb-1">Opción Múltiple / Test</span>
+                                                <div><strong>Pregunta:</strong> {{ e.pregunta_matematica }}</div>
+                                                <div><strong>Opciones:</strong> {{ e.opciones_test }}</div>
+                                                <div><strong>Correcta:</strong> <span class="text-success fw-bold">{{ e.respuesta_correcta }}</span></div>
+                                            {% else %}
+                                                <span class="badge bg-secondary mb-1">Respuesta Abierta</span>
+                                                <div><strong>Enunciado:</strong> {{ e.pregunta_matematica }}</div>
+                                            {% endif %}
+                                            {% if e.imagen %}
+                                                <div class="text-center my-2">
+                                                    <img src="{{ e.imagen.url }}" class="img-fluid rounded border shadow-sm" style="max-height: 120px; object-fit: contain;" alt="Imagen del reto">
+                                                </div>
+                                            {% endif %}
+                                            <div class="mt-1 text-muted"><strong>Mitigación:</strong> {{ e.porcentaje_mitigacion }}%</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center small text-muted border-top pt-2">
+                                        <div>
+                                            <span class="text-danger fw-bold me-1">-{{ e.penalizacion_dinero }}€</span>
+                                            <span class="text-danger fw-bold me-1">-{{ e.penalizacion_salud }}S</span>
+                                            <span class="text-danger fw-bold">-{{ e.penalizacion_felicidad }}F</span>
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <button class="btn btn-sm btn-outline-primary border-0" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editModalEvento{{ e.id }}"
+                                                    onclick="actualizarVistaPrevia('pregunta_input_edit_{{ e.id }}', 'vista_previa_math_edit_{{ e.id }}')">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <form method="POST" action="{% url 'eliminar_evento' e.id %}" onsubmit="return confirm('¿Eliminar reto del tema «{{ e.temario }}»?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MODAL DE EDICIÓN DE RETO -->
+                        <div class="modal fade" id="editModalEvento{{ e.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <form method="POST" action="{% url 'editar_evento' e.id %}" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="modal-header bg-danger text-white">
+                                            <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square me-1"></i> Editar Reto ({{ e.temario }})</h6>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-6">
+                                                    <label class="form-label micro fw-bold">Curso:</label>
+                                                    <select name="curso" class="form-select form-select-sm">
+                                                        <option value="1_ESO" {% if e.curso == '1_ESO' %}selected{% endif %}>1º ESO</option>
+                                                        <option value="2_ESO" {% if e.curso == '2_ESO' %}selected{% endif %}>2º ESO</option>
+                                                        <option value="3_ESO" {% if e.curso == '3_ESO' %}selected{% endif %}>3º ESO</option>
+                                                        <option value="4_ESO" {% if e.curso == '4_ESO' %}selected{% endif %}>4º ESO</option>
+                                                        <option value="BACH" {% if e.curso == 'BACH' %}selected{% endif %}>Bachillerato</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label micro fw-bold">Dificultad:</label>
+                                                    <select name="dificultad" class="form-select form-select-sm">
+                                                        <option value="FACIL" {% if e.dificultad == 'FACIL' %}selected{% endif %}>Fácil</option>
+                                                        <option value="MEDIO" {% if e.dificultad == 'MEDIO' %}selected{% endif %}>Medio</option>
+                                                        <option value="DIFICIL" {% if e.dificultad == 'DIFICIL' %}selected{% endif %}>Difícil</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label micro fw-bold">Temario / Unidad:</label>
+                                                <input type="text" name="temario" class="form-control form-control-sm" value="{{ e.temario }}" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label micro fw-bold">Tipo de Respuesta:</label>
+                                                <select name="tipo_respuesta" class="form-select form-select-sm">
+                                                    <option value="NUMERICA" {% if e.tipo_respuesta == 'NUMERICA' %}selected{% endif %}>Numérica</option>
+                                                    <option value="TEST" {% if e.tipo_respuesta == 'TEST' %}selected{% endif %}>Opción Múltiple / Test</option>
+                                                    <option value="TEXTO" {% if e.tipo_respuesta == 'TEXTO' %}selected{% endif %}>Respuesta Abierta</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label micro fw-bold text-muted">Pregunta / Ejercicio Matemático:</label>
+                                                
+                                                <!-- Botones de inserción rápida para el profesor -->
+                                                <div class="btn-group btn-group-sm mb-2 w-100 d-flex flex-wrap gap-1" role="group">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}',  '\\frac{a}{b}')">½ Fracción</button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}',  'x^2')">x² Potencia</button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\sqrt{x}')">√ Raíz</button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\pi')">π Pi</button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\le')">≤ Menor o igual</button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\ge')">≥ Mayor o igual</button>
+                                                </div>
+
+                                                <!-- Campo de texto -->
+                                                <textarea id="pregunta_input_{{ e.id }}" name="pregunta_matematica" class="form-control form-control-sm" 
+                                                rows="3"
+                                                oninput="actualizarVistaPrevia('vista_previa_math_{{ e.id }}', 'pregunta_input_{{ e.id }}')" required>{{ e.pregunta_matematica | default:'' }}</textarea>                                                 
+
+
+                                                <!-- Caja de Vista Previa -->
+                                                <div class="mt-2 p-2 bg-white rounded border">
+                                                    <small class="text-muted d-block fw-bold micro">Vista previa para el alumno:</small>
+                                                    <div id="vista_previa_math_{{ e.id }}" class="fs-6 text-primary fw-bold mt-1">Escribe una fórmula para ver el resultado...</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3 p-2 bg-light rounded border">
+                                                <label class="form-label micro fw-bold text-muted d-block">Imagen Adjunta:</label>
+                                                {% if e.imagen %}
+                                                    <div class="text-center mb-2">
+                                                        <img src="{{ e.imagen.url }}" class="img-thumbnail" style="max-height: 100px;" alt="Imagen actual">
+                                                        <small class="text-muted d-block micro">Imagen actual</small>
+                                                    </div>
+                                                {% endif %}
+                                                <input type="file" name="imagen" class="form-control form-control-sm" accept="image/*">
+                                                <small class="text-muted micro">Selecciona un archivo si deseas reemplazar la imagen actual.</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label micro fw-bold">Opciones Test (separadas por coma):</label>
+                                                <input type="text" name="opciones_test" class="form-control form-control-sm" value="{{ e.opciones_test|default:'' }}">
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label micro fw-bold">Respuesta Correcta:</label>
+                                                <input type="text" name="respuesta_correcta" class="form-control form-control-sm" value="{{ e.respuesta_correcta|default:'' }}">
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-3">
+                                                    <label class="form-label micro fw-bold">Multa €:</label>
+                                                    <input type="number" step="0.01" name="penalizacion_dinero" class="form-control form-control-sm" value="{{ e.penalizacion_dinero|stringformat:'.2f' }}">
+                                                </div>
+                                                <div class="col-3">
+                                                    <label class="form-label micro fw-bold">Salud -:</label>
+                                                    <input type="number" name="penalizacion_salud" class="form-control form-control-sm" value="{{ e.penalizacion_salud }}">
+                                                </div>
+                                                <div class="col-3">
+                                                    <label class="form-label micro fw-bold">Fel. -:</label>
+                                                    <input type="number" name="penalizacion_felicidad" class="form-control form-control-sm" value="{{ e.penalizacion_felicidad }}">
+                                                </div>
+                                                <div class="col-3">
+                                                    <label class="form-label micro fw-bold">% Mitig.:</label>
+                                                    <input type="number" name="porcentaje_mitigacion" class="form-control form-control-sm" value="{{ e.porcentaje_mitigacion }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-sm btn-danger fw-bold">Guardar Cambios</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12"><div class="alert alert-light text-center py-4">No hay retos registrados con los filtros seleccionados.</div></div>
+                    {% endfor %}
+                </div>
+                {% if eventos.has_other_pages %}
+                    <nav aria-label="Navegación del banco" class="mt-4">
+                        <ul class="pagination pagination-sm justify-content-center">
+                            
+                            {% if eventos.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ eventos.previous_page_number }}{% if curso_actual %}&curso={{ curso_actual }}{% endif %}{% if dificultad_actual %}&dificultad={{ dificultad_actual }}{% endif %}">« Anterior</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">« Anterior</span></li>
+                            {% endif %}
+
+                            {% for i in eventos.paginator.page_range %}
+                                {% if eventos.number == i %}
+                                    <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                                {% elif i > eventos.number|add:"-3" and i < eventos.number|add:"3" %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}{% if curso_actual %}&curso={{ curso_actual }}{% endif %}{% if dificultad_actual %}&dificultad={{ dificultad_actual }}{% endif %}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if eventos.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ eventos.next_page_number }}{% if curso_actual %}&curso={{ curso_actual }}{% endif %}{% if dificultad_actual %}&dificultad={{ dificultad_actual }}{% endif %}">Siguiente »</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">Siguiente »</span></li>
+                            {% endif %}
+
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+
+            <!-- PESTAÑA 2: TARJETAS DE RECOMPENSA -->
+            <div class="tab-pane fade" id="tarjetas-pane" role="tabpanel">
+                <div class="row g-3">
+                    {% for t in tarjetas %}
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-sm border-0 border-start border-4 border-warning">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-warning text-dark">{{ t.get_curso_display }}</span>
+                                            <span class="badge bg-outline-dark border text-dark">{{ t.get_dificultad_display }}</span>
+                                        </div>
+                                        <h6 class="fw-bold text-dark mb-1">{{ t.nombre }}</h6>
+                                        <span class="badge bg-info text-dark mb-2"><i class="bi bi-book me-1"></i>{{ t.temario }}</span>
+                                        <p class="small text-muted mb-3">{{ t.descripcion }}</p>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center small border-top pt-2">
+                                        <div class="fw-bold">
+                                            <span class="text-success me-1">+{{ t.efecto_dinero }} €</span>
+                                            <span class="text-primary me-1">+{{ t.efecto_salud }}S</span>
+                                            <span class="text-purple">+{{ t.efecto_felicidad }}F</span>
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <button class="btn btn-sm btn-outline-primary border-0" data-bs-toggle="modal" data-bs-target="#editModalTarjeta{{ t.id }}">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <form method="POST" action="{% url 'eliminar_tarjeta' t.id %}" onsubmit="return confirm('¿Eliminar tarjeta «{{ t.nombre }}»?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MODAL DE EDICIÓN DE TARJETA -->
+                        <div class="modal fade" id="editModalTarjeta{{ t.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <form method="POST" action="{% url 'editar_tarjeta' t.id %}">
+                                        {% csrf_token %}
+                                        <div class="modal-header bg-warning text-dark">
+                                            <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square me-1"></i> Editar Tarjeta: {{ t.nombre }}</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-6">
+                                                    <label class="form-label micro fw-bold">Curso:</label>
+                                                    <select name="curso" class="form-select form-select-sm">
+                                                        <option value="1_ESO" {% if t.curso == '1_ESO' %}selected{% endif %}>1º ESO</option>
+                                                        <option value="2_ESO" {% if t.curso == '2_ESO' %}selected{% endif %}>2º ESO</option>
+                                                        <option value="3_ESO" {% if t.curso == '3_ESO' %}selected{% endif %}>3º ESO</option>
+                                                        <option value="4_ESO" {% if t.curso == '4_ESO' %}selected{% endif %}>4º ESO</option>
+                                                        <option value="BACH" {% if t.curso == 'BACH' %}selected{% endif %}>Bachillerato</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label micro fw-bold">Dificultad:</label>
+                                                    <select name="dificultad" class="form-select form-select-sm">
+                                                        <option value="FACIL" {% if t.dificultad == 'FACIL' %}selected{% endif %}>Fácil</option>
+                                                        <option value="MEDIO" {% if t.dificultad == 'MEDIO' %}selected{% endif %}>Medio</option>
+                                                        <option value="DIFICIL" {% if t.dificultad == 'DIFICIL' %}selected{% endif %}>Difícil</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label micro fw-bold">Temario / Unidad:</label>
+                                                <input type="text" name="temario" class="form-control form-control-sm" value="{{ t.temario }}" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label micro fw-bold">Nombre:</label>
+                                                <input type="text" name="nombre" class="form-control form-control-sm" value="{{ t.nombre }}" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label micro fw-bold">Descripción:</label>
+                                                <textarea name="descripcion" class="form-control form-control-sm" rows="2" required>{{ t.descripcion }}</textarea>
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-4">
+                                                    <label class="form-label micro fw-bold">Dinero +€:</label>
+                                                    <input type="number" step="0.01" name="efecto_dinero" class="form-control form-control-sm" value="{{ t.efecto_dinero|stringformat:'.2f' }}">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label micro fw-bold">Salud +:</label>
+                                                    <input type="number" name="efecto_salud" class="form-control form-control-sm" value="{{ t.efecto_salud }}">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label micro fw-bold">Fel. +:</label>
+                                                    <input type="number" name="efecto_felicidad" class="form-control form-control-sm" value="{{ t.efecto_felicidad }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-sm btn-warning fw-bold">Guardar Cambios</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12"><div class="alert alert-light text-center py-4">No hay tarjetas registradas con los filtros seleccionados.</div></div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- PESTAÑA 3: ALTA RÁPIDA DE RECURSOS -->
+            <div class="tab-pane fade" id="nuevo-pane" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Formulario Reto / Actividad -->
+                    <div class="col-12 col-md-6">
+                        <div class="card p-4 shadow-sm border-0">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-lightning-charge me-1"></i> Registrar Nueva Actividad / Reto</h6>
+                            <form method="POST" action="{% url 'crear_evento_personalizado' %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label micro fw-bold text-muted">Curso:</label>
+                                        <select name="curso" class="form-select form-select-sm" required>
+                                            <option value="1_ESO">1º ESO</option>
+                                            <option value="2_ESO">2º ESO</option>
+                                            <option value="3_ESO">3º ESO</option>
+                                            <option value="4_ESO">4º ESO</option>
+                                            <option value="BACH">Bachillerato</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label micro fw-bold text-muted">Dificultad:</label>
+                                        <select name="dificultad" class="form-select form-select-sm" required>
+                                            <option value="FACIL">Fácil</option>
+                                            <option value="MEDIO" selected>Medio</option>
+                                            <option value="DIFICIL">Difícil</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label micro fw-bold text-muted">Temario / Unidad:</label>
+                                    <input type="text" name="temario" class="form-control form-control-sm" placeholder="Ej: Porcentajes, Regla de 3" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label micro fw-bold text-muted">Tipo de Respuesta:</label>
+                                    <select name="tipo_respuesta" class="form-select form-select-sm" required>
+                                        <option value="NUMERICA">Numérica (Autocorregible)</option>
+                                        <option value="TEST">Opción Múltiple / Test</option>
+                                        <option value="TEXTO">Respuesta Abierta (Requiere revisión)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label micro fw-bold text-muted">Pregunta / Ejercicio Matemático:</label>
+                                    
+                                    <!-- Botones de inserción rápida para el profesor -->
+                                    <div class="btn-group btn-group-sm mb-2 w-100 d-flex flex-wrap gap-1" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\frac{a}{b}')">½ Fracción</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', 'x^2')">x² Potencia</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\sqrt{x}')">√ Raíz</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\pi')">π Pi</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\le')">≤ Menor o igual</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\ge')">≥ Mayor o igual</button>
+                                    </div>
+
+                                    <!-- Campo de texto -->
+                                    <textarea id="pregunta_input2" name="pregunta_matematica" class="form-control form-control-sm" 
+                                        rows="3" placeholder="Ej: Calcula la hipotenusa de un triángulo con a=3 y b=4 usando $c = \sqrt{a^2 + b^2}$" 
+                                        oninput="actualizarVistaPrevia('vista_previa_math2', this.value)"required></textarea> 
+                                    
+                                    <!-- Caja de Vista Previa -->
+                                    <div class="mt-2 p-2 bg-white rounded border">
+                                        <small class="text-muted d-block fw-bold micro">Vista previa para el alumno:</small>
+                                        <div id="vista_previa_math2" class="fs-6 text-primary fw-bold mt-1">Escribe una fórmula para ver el resultado...</div>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label micro fw-bold text-muted">Imagen Adjunta (Opcional - Geometría / Gráficos):</label>
+                                    <input type="file" name="imagen" class="form-control form-control-sm" accept="image/*">
+                                </div>
+                                <div class="mb-2">
+                                    <input type="text" name="opciones_test" class="form-control form-control-sm" placeholder="Opciones Test separadas por comas (Ej: 10, 20, 30)">
+                                </div>
+                                <div class="mb-2">
+                                    <input type="text" name="respuesta_correcta" class="form-control form-control-sm" placeholder="Respuesta Correcta (Ej: 30)">
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-3"><input type="number" step="0.01" name="penalizacion_dinero" class="form-control form-control-sm" placeholder="Multa €"></div>
+                                    <div class="col-3"><input type="number" name="penalizacion_salud" class="form-control form-control-sm" placeholder="Salud -"></div>
+                                    <div class="col-3"><input type="number" name="penalizacion_felicidad" class="form-control form-control-sm" placeholder="Fel. -"></div>
+                                    <div class="col-3"><input type="number" name="porcentaje_mitigacion" class="form-control form-control-sm" value="50" placeholder="% Mitig."></div>
+                                </div>
+                                <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold">Guardar Actividad</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Formulario Tarjeta de Recompensa -->
+                    <div class="col-12 col-md-6">
+                        <div class="card p-4 shadow-sm border-0">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-award me-1"></i> Registrar Nueva Tarjeta de Recompensa</h6>
+                            <form method="POST" action="{% url 'crear_tarjeta_personalizada' %}">
+                                {% csrf_token %}
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label micro fw-bold text-muted">Curso:</label>
+                                        <select name="curso" class="form-select form-select-sm" required>
+                                            <option value="1_ESO">1º ESO</option>
+                                            <option value="2_ESO">2º ESO</option>
+                                            <option value="3_ESO">3º ESO</option>
+                                            <option value="4_ESO">4º ESO</option>
+                                            <option value="BACH">Bachillerato</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label micro fw-bold text-muted">Dificultad:</label>
+                                        <select name="dificultad" class="form-select form-select-sm" required>
+                                            <option value="FACIL">Fácil</option>
+                                            <option value="MEDIO" selected>Medio</option>
+                                            <option value="DIFICIL">Difícil</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label micro fw-bold text-muted">Temario / Unidad:</label>
+                                    <input type="text" name="temario" class="form-control form-control-sm" placeholder="Ej: Trabajo en Equipo, Ahorro" required>
+                                </div>
+
+                                <div class="mb-2"><input type="text" name="nombre" class="form-control form-control-sm" placeholder="Nombre de la tarjeta" required></div>
+                                <div class="mb-3"><textarea name="descripcion" class="form-control form-control-sm" rows="2" placeholder="Descripción de la recompensa..." required></textarea></div>
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-4"><input type="number" step="0.01" name="efecto_dinero" class="form-control form-control-sm" placeholder="Dinero +€"></div>
+                                    <div class="col-4"><input type="number" name="efecto_salud" class="form-control form-control-sm" placeholder="Salud +"></div>
+                                    <div class="col-4"><input type="number" name="efecto_felicidad" class="form-control form-control-sm" placeholder="Fel. +"></div>
+                                </div>
+
+                                <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold">Guardar Tarjeta en el Banco</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function insertarSimbolo(inputId, ElementId, simbolo) {
+            const input = document.getElementById(inputId);
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const text = input.value;
+            const element= ElementId
+            
+            // Insertar el símbolo rodeado de $ para KaTeX
+            const codigo = `$${simbolo}$`;
+            input.value = text.substring(0, start) + codigo + text.substring(end);
+            input.focus();
+            input.setSelectionRange(start + codigo.length, start + codigo.length);
+            actualizarVistaPrevia(element, input.value);
+        }
+
+        function actualizarVistaPrevia(previewId, inputId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            if (!preview) return;
+
+            // Usar directamente la variable 'texto' que viene de this.value
+            preview.innerHTML = input.value || "Escribe una fórmula para ver el resultado...";
+
+            if (window.renderMathInElement) {
+                renderMathInElement(preview, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof renderMathInElement === 'function') {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+        });
+    </script>
+</body>
+</html>

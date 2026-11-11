@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Plataforma Educativa{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .micro {
+            font-size: 0.85rem;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-warning" href="{% url 'dashboard' %}">
+                <i class="bi bi-controller me-2"></i>Aula Gamificada
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-menu navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'dashboard' %}">
+                                <i class="bi bi-house-door me-1"></i>Inicio / Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'tienda_cartas' %}">
+                                <i class="bi bi-shop me-1"></i>Tienda de Recompensas
+                            </a>
+                        </li>
+                        
+                        <!-- Opción visible si es profesor o staff -->
+                        {% if user.is_staff or user.clases.exists %}
+                            <li class="nav-item">
+                                <a class="nav-link text-info fw-bold" href="{% url 'profesor_panel' %}">
+                                    <i class="bi bi-person-badge me-1"></i>Panel Docente
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+
+                <div class="d-flex align-items-center gap-3">
+                    {% if user.is_authenticated %}
+                        <span class="navbar-text text-light small">
+                            <i class="bi bi-person-circle me-1"></i>{{ user.get_full_name|default:user.username }}
+                        </span>
+                        <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
+                            <i class="bi bi-box-arrow-right me-1"></i>Salir
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-warning btn-sm fw-bold">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar Sesión
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MENSAJES FLOTANTES DE SISTEMA (ALERTAS) -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                    {% if message.tags == 'error' %}<i class="bi bi-exclamation-octagon-fill me-2"></i>{% endif %}
+                    {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>{% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL DE CADA PÁGINA -->
+    <main class="flex-grow-1">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="bg-white border-top py-3 mt-auto">
+        <div class="container text-center text-muted small">
+            <span>© Plataforma de Aprendizaje y Gestión Gamificada</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle (incluye Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
