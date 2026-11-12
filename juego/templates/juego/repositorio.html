@@ -467,23 +467,23 @@
                                     
                                     <!-- Botones de inserción rápida para el profesor -->
                                     <div class="btn-group btn-group-sm mb-2 w-100 d-flex flex-wrap gap-1" role="group">
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\frac{a}{b}')">½ Fracción</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', 'x^2')">x² Potencia</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\sqrt{x}')">√ Raíz</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\pi')">π Pi</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\le')">≤ Menor o igual</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input2', 'vista_previa_math2', '\\ge')">≥ Mayor o igual</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\frac{a}{b}')">½ Fracción</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', 'x^2')">x² Potencia</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\sqrt{x}')">√ Raíz</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\pi')">π Pi</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\le')">≤ Menor o igual</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\ge')">≥ Mayor o igual</button>
                                     </div>
 
                                     <!-- Campo de texto -->
-                                    <textarea id="pregunta_input2" name="pregunta_matematica" class="form-control form-control-sm" 
+                                    <textarea id="pregunta_input_{{ e.id }}" name="pregunta_matematica" class="form-control form-control-sm" 
                                         rows="3" placeholder="Ej: Calcula la hipotenusa de un triángulo con a=3 y b=4 usando $c = \sqrt{a^2 + b^2}$" 
-                                        oninput="actualizarVistaPrevia('vista_previa_math2', this.value)"required></textarea> 
+                                        oninput="actualizarVistaPrevia('vista_previa_math_{{ e.id }}','pregunta_input_{{ e.id }}')"required></textarea> 
                                     
                                     <!-- Caja de Vista Previa -->
                                     <div class="mt-2 p-2 bg-white rounded border">
                                         <small class="text-muted d-block fw-bold micro">Vista previa para el alumno:</small>
-                                        <div id="vista_previa_math2" class="fs-6 text-primary fw-bold mt-1">Escribe una fórmula para ver el resultado...</div>
+                                        <div id="vista_previa_math_{{ e.id }}" class="fs-6 text-primary fw-bold mt-1">Escribe una fórmula para ver el resultado...</div>
                                     </div>
                                 </div>
                                 <div class="mb-2">

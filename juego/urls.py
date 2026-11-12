@@ -27,6 +27,7 @@ urlpatterns = [
     path('resolver-impugnacion/<int:evento_alumno_id>/', views.resolver_impugnacion, name='resolver_impugnacion'),
     path('clase/agregar-alumno/', views.agregar_alumno_a_clase, name='agregar_alumno_a_clase'),
     path('clase/quitar-alumno/<int:personaje_id>/', views.quitar_alumno_de_clase, name='quitar_alumno_de_clase'),
+    path('evaluar-evento/<int:evento_alumno_id>/', views.evaluar_evento_abierto, name='evaluar_evento_abierto'),
 
     # --- BANCO DE RECURSOS Y CREACIÓN DE MATERIALES ---
     path('profesor/repositorio/', views.banco_recursos, name='banco_recursos'),

@@ -86,9 +86,10 @@ def dashboard(request):
     )
     
     tarjetas_alumno = TarjetaAlumno.objects.filter(personaje=personaje, usada=False)
-    eventos_pendientes = EventoAlumno.objects.filter(personaje=personaje, resuelto=False)
+    eventos_pendientes = EventoAlumno.objects.filter(personaje=personaje, resuelto=False, pendiente_revision=False)
     transacciones = Transaccion.objects.filter(personaje=personaje).order_by('-fecha')[:10]
     tiene_seguro_disponible = tarjetas_alumno.filter(tarjeta__tipo='SEGURO').exists()
+    eventos_pendientes_revision = EventoAlumno.objects.filter(personaje=personaje, pendiente_revision=True, resuelto=False)
     retos_resueltos = EventoAlumno.objects.filter(personaje=personaje, resuelto=True).order_by('-fecha')
 
     # Asignar narrativa aleatoria temporal en caso de que el reto no la tuviera guardada
@@ -115,6 +116,7 @@ def dashboard(request):
         'impacto_felicidad': personaje.obtener_impacto_felicidad(),
         'tiene_seguro_disponible': tiene_seguro_disponible,
         'retos_resueltos': retos_resueltos,
+        'eventos_pendientes_revision': eventos_pendientes_revision,
     }
     
     return render(request, 'juego/dashboard.html', contexto)
@@ -190,30 +192,42 @@ def responder_evento(request, evento_alumno_id):
     evento_alumno = get_object_or_404(EventoAlumno, id=evento_alumno_id, personaje__usuario=request.user)
     
     if request.method == 'POST':
+        # 1. Evitar que se sobrescriba o se cobre dos veces si ya fue respondido
+        if evento_alumno.resuelto or evento_alumno.pendiente_revision:
+            messages.warning(request, "Este imprevisto ya ha sido respondido.")
+            return redirect('dashboard')
+
         respuesta_usuario = request.POST.get('respuesta_alumno', '').strip()
+        if not respuesta_usuario:
+            messages.error(request, "La respuesta no puede enviarse vacía.")
+            return redirect('dashboard')
+
         evento_alumno.respuesta_alumno = respuesta_usuario        
         reto = evento_alumno.evento
-        tipo = reto.tipo_respuesta
+        tipo = (reto.tipo_respuesta or '').strip().upper()
         es_correcta = False
 
         if tipo == 'NUMERICA':
             try:
                 val_usuario = float(respuesta_usuario.replace(',', '.'))
-                val_correcto = float(reto.respuesta_correcta.replace(',', '.'))
+                val_correcto = float(str(reto.respuesta_correcta).replace(',', '.'))
                 es_correcta = abs(val_usuario - val_correcto) < 0.01
-            except (ValueError, AttributeError):
+            except (ValueError, TypeError, AttributeError):
                 es_correcta = False
             evento_alumno.resuelto = True
+
         elif tipo == 'TEST':
             if reto.respuesta_correcta:
                 es_correcta = (respuesta_usuario.lower() == reto.respuesta_correcta.strip().lower())
             else:
                 es_correcta = False
             evento_alumno.resuelto = True
-        elif tipo == 'TEXTO':
+
+        else:
+            # Cualquier respuesta abierta (TEXTO, ABIERTA, etc.) se guarda y pasa a revisión docente
             evento_alumno.pendiente_revision = True
             evento_alumno.save()
-            messages.info(request, "Tu propuesta ha sido enviada. El profesor la revisará en breve.")
+            messages.info(request, "Tu propuesta ha sido guardada. El profesor la revisará en breve.")
             return redirect('dashboard')
 
         evento_alumno.exito_reto = es_correcta
@@ -221,7 +235,7 @@ def responder_evento(request, evento_alumno_id):
         # CALCULAR PENALIZACIÓN CON MITIGACIÓN
         factor_multa = Decimal('1.0')
         if es_correcta:
-            mitigacion = Decimal(reto.porcentaje_mitigacion) / Decimal('100')
+            mitigacion = Decimal(str(reto.porcentaje_mitigacion)) / Decimal('100')
             factor_multa = Decimal('1.0') - mitigacion
             evento_alumno.mitigado = True
             messages.success(request, f"¡Respuesta correcta! Has mitigado el imprevisto en un {reto.porcentaje_mitigacion}%.")
@@ -230,7 +244,7 @@ def responder_evento(request, evento_alumno_id):
             messages.error(request, "Respuesta incorrecta. Se ha aplicado la penalización completa.")
 
         # APLICAR IMPACTO EN EL PERSONAJE
-        pen_dinero = reto.penalizacion_dinero * factor_multa
+        pen_dinero = Decimal(str(reto.penalizacion_dinero)) * factor_multa
         pen_salud = int(reto.penalizacion_salud * float(factor_multa))
         pen_felicidad = int(reto.penalizacion_felicidad * float(factor_multa))
 
@@ -252,7 +266,6 @@ def responder_evento(request, evento_alumno_id):
         evento_alumno.save()
 
     return redirect('dashboard')
-
 
 
 @login_required
@@ -308,7 +321,6 @@ def gestionar_fondo(request):
     return redirect('dashboard')
 
 
-
 @login_required
 def solicitar_revision(request, evento_alumno_id):
     """El alumno solicita que el profesor revise su respuesta."""
@@ -321,6 +333,68 @@ def solicitar_revision(request, evento_alumno_id):
     return redirect('dashboard')
 
 
+@login_required
+def evaluar_evento_abierto(request, evento_alumno_id):
+    """Permite al profesor aprobar (mitigar) o rechazar (penalizar) una respuesta abierta."""
+    es_profesor = request.user.is_staff or Clase.objects.filter(profesor=request.user).exists()
+    if not es_profesor:
+        messages.error(request, "No tienes permisos para realizar esta acción.")
+        return redirect('dashboard')
+
+    evento_alumno = get_object_or_404(
+        EventoAlumno,
+        id=evento_alumno_id,
+        personaje__clase__profesor=request.user
+    )
+
+    if request.method == 'POST':
+        if evento_alumno.resuelto:
+            messages.warning(request, "Este reto ya fue evaluado anteriormente.")
+            return redirect('profesor_panel')
+
+        accion = request.POST.get('accion')
+        es_correcta = (accion == 'aprobar')
+        reto = evento_alumno.evento
+
+        factor_multa = Decimal('1.0')
+        if es_correcta:
+            mitigacion = Decimal(str(reto.porcentaje_mitigacion)) / Decimal('100')
+            factor_multa = Decimal('1.0') - mitigacion
+            evento_alumno.mitigado = True
+            evento_alumno.exito_reto = True
+        else:
+            evento_alumno.mitigado = False
+            evento_alumno.exito_reto = False
+
+        pen_dinero = Decimal(str(reto.penalizacion_dinero)) * factor_multa
+        pen_salud = int(reto.penalizacion_salud * float(factor_multa))
+        pen_felicidad = int(reto.penalizacion_felicidad * float(factor_multa))
+
+        personaje = evento_alumno.personaje
+        personaje.dinero_disponible -= pen_dinero
+        personaje.salud = max(0, personaje.salud - pen_salud)
+        personaje.felicidad = max(0, personaje.felicidad - pen_felicidad)
+        personaje.save()
+
+        Transaccion.objects.create(
+            personaje=personaje,
+            concepto=f"Imprevisto: {evento_alumno.titulo_narrativo or reto.temario}",
+            monto=-pen_dinero,
+            tipo='GASTO',
+            explicacion_operacion=f"Revisión docente: Penalización {'Mitigada' if es_correcta else 'Completa'}"
+        )
+
+        evento_alumno.pendiente_revision = False
+        evento_alumno.resuelto = True
+        evento_alumno.save()
+
+        estado_msg = "aprobada (mitigación aplicada)" if es_correcta else "rechazada (penalización completa)"
+        messages.success(request, f"Respuesta de {personaje.usuario.username} {estado_msg}.")
+
+        if personaje.clase:
+            return redirect(f"{reverse('profesor_panel')}?clase_id={personaje.clase.id}")
+
+    return redirect('profesor_panel')
 
 def cerrar_sesion(request):
     logout(request)
@@ -338,30 +412,33 @@ def profesor_panel(request):
     if not es_profesor:
         messages.error(request, "Acceso restringido al docente.")
         return redirect('dashboard')
-    # 1. Obtener todas las clases del profesor
+
     clases = Clase.objects.filter(profesor=request.user).order_by('nombre')
 
-    # 2. Determinar la clase activa (por URL o la primera de la lista)
-    clase_id = request.GET.get('clase_id')
+    clase_id = request.GET.get('clase_id', '')
     clase_seleccionada = None
-    if clase_id:
-        clase_seleccionada = clases.filter(id=clase_id).first()
+    if clase_id and clase_id.isdigit():
+        clase_seleccionada = clases.filter(id=int(clase_id)).first()
     
     if not clase_seleccionada and clases.exists():
         clase_seleccionada = clases.first()
 
-    # 3. Filtrar los alumnos pertenecientes ÚNICAMENTE a la clase activa
     if clase_seleccionada:
         personajes = Personaje.objects.filter(clase=clase_seleccionada).select_related('usuario')
         revisiones_pendientes = EventoAlumno.objects.filter(
             estado_revision='PENDIENTE',
             personaje__clase=clase_seleccionada
         ).select_related('personaje__usuario', 'evento')
+        eventos_pendientes_revision = EventoAlumno.objects.filter(
+            pendiente_revision=True,
+            resuelto=False,
+            personaje__clase=clase_seleccionada
+        ).select_related('personaje__usuario', 'evento')
     else:
         personajes = Personaje.objects.none()
         revisiones_pendientes = EventoAlumno.objects.none()
+        eventos_pendientes_revision = EventoAlumno.objects.none()
 
-    # 4. Alumnos registrados sin clase (para poder añadirlos a la clase activa)
     alumnos_disponibles = Personaje.objects.filter(clase__isnull=True).select_related('usuario')
 
     f_curso = request.GET.get('curso', '').strip()
@@ -370,10 +447,6 @@ def profesor_panel(request):
 
     tarjetas = Tarjeta.objects.all()
     eventos = EventoAleatorio.objects.all()
-    revisiones_pendientes = EventoAlumno.objects.filter(
-        estado_revision='PENDIENTE',
-        personaje__clase__profesor=request.user
-    )
 
     if f_curso:
         tarjetas = tarjetas.filter(curso=f_curso)
@@ -387,8 +460,6 @@ def profesor_panel(request):
         tarjetas = tarjetas.filter(temario__icontains=f_temario)
         eventos = eventos.filter(temario__icontains=f_temario)
 
-
-
     context = {
         'personajes': personajes,
         'clases': clases,
@@ -397,12 +468,12 @@ def profesor_panel(request):
         'alumnos_disponibles': alumnos_disponibles,
         'eventos': eventos,
         'revisiones_pendientes': revisiones_pendientes,
+        'eventos_pendientes_revision': eventos_pendientes_revision,
         'f_curso': f_curso,
         'f_dificultad': f_dificultad,
         'f_temario': f_temario,
     }
     return render(request, 'juego/profesor_panel.html', context)
-
 
 @login_required
 def profesor_detalle_alumno(request, personaje_id):

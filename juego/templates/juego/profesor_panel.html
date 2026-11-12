@@ -182,9 +182,11 @@
                 <li class="nav-item">
                     <button class="nav-link fw-bold  text-danger" id="revisiones-tab" data-bs-toggle="tab" data-bs-target="#revisiones-pane" type="button" role="tab">
                         <i class="bi bi-inbox me-1"></i> Revisiones Pendientes
-                        {% if revisiones_pendientes.count > 0 %}
-                            <span class="badge bg-danger rounded-pill">{{ revisiones_pendientes.count }}</span>
-                        {% endif %}
+                        {% with total_pendientes=revisiones_pendientes.count|add:eventos_pendientes_revision.count %}
+                            {% if total_pendientes > 0 %}
+                                <span class="badge bg-danger rounded-pill">{{ total_pendientes }}</span>
+                            {% endif %}
+                        {% endwith %}
                     </button>
                 </li>
                 <li class="nav-item">
@@ -360,6 +362,55 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold">Retos Abiertos Pendientes de Revisión</h6>
+                            <span class="badge bg-dark">{{ eventos_pendientes_revision|length }}</span>
+                        </div>
+                        <div class="card-body">
+                            {% if eventos_pendientes_revision %}
+                                <div class="list-group list-group-flush">
+                                    {% for ev in eventos_pendientes_revision %}
+                                        <div class="list-group-item px-0 py-3">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <span class="badge bg-primary me-1">
+                                                        {{ ev.personaje.usuario.get_full_name|default:ev.personaje.usuario.username }}
+                                                    </span>
+                                                    <strong>{{ ev.titulo_narrativo|default:ev.evento.temario }}</strong>
+                                                </div>
+                                                <small class="text-muted">
+                                                    Penalización base: -{{ ev.evento.penalizacion_dinero }} € | 
+                                                    Mitigación: {{ ev.evento.porcentaje_mitigacion }}%
+                                                </small>
+                                            </div>
+
+                                            <p class="small text-secondary mb-2">
+                                                <strong>Reto:</strong> {{ ev.evento.pregunta_matematica|default:ev.evento.temario }}
+                                            </p>
+
+                                            <div class="p-2 bg-light border-start border-4 border-info rounded mb-3">
+                                                <small class="text-muted d-block">Respuesta del alumno:</small>
+                                                <span class="fst-italic">"{{ ev.respuesta_alumno }}"</span>
+                                            </div>
+
+                                            <form method="POST" action="{% url 'evaluar_evento_abierto' ev.id %}" class="d-flex gap-2">
+                                                {% csrf_token %}
+                                                <button type="submit" name="accion" value="aprobar" class="btn btn-success btn-sm">
+                                                    Aprobar y Mitigar ({{ ev.evento.porcentaje_mitigacion }}%)
+                                                </button>
+                                                <button type="submit" name="accion" value="rechazar" class="btn btn-danger btn-sm">
+                                                    Rechazar (Penalización completa)
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted small mb-0">No hay respuestas abiertas pendientes de corrección.</p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

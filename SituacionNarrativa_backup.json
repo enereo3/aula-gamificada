@@ -1,0 +1,458 @@
+[
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 1,
+  "fields": {
+    "titulo": "Avería en la bicicleta",
+    "descripcion": "Al ir a clase se ha salido la cadena y has tenido que llevar la bici al taller de reparación."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 2,
+  "fields": {
+    "titulo": "Factura imprevista del móvil",
+    "descripcion": "Has superado el límite de datos del bono mensual y te ha llegado un recargo en la factura."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 3,
+  "fields": {
+    "titulo": "Revisión en el dentista",
+    "descripcion": "En la revisión anual te han detectado una pequeña caries que requiere empaste."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 4,
+  "fields": {
+    "titulo": "Pérdida de la tarjeta de transporte",
+    "descripcion": "Has olvidado el abono de autobús en casa y has tenido que comprar un billete sencillo de urgencia."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 5,
+  "fields": {
+    "titulo": "Pantalla del móvil rota",
+    "descripcion": "Se te ha caído el teléfono al suelo al salir de clase y la pantalla se ha agrietado."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 6,
+  "fields": {
+    "titulo": "Compra de material escolar",
+    "descripcion": "El profesor ha pedido un cuaderno especial y una calculadora científica para la nueva unidad."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 7,
+  "fields": {
+    "titulo": "Cumpleaños de un amigo",
+    "descripcion": "Tus compañeros están organizando un bote común para comprar un regalo de cumpleaños."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 8,
+  "fields": {
+    "titulo": "Electrodoméstico roto en casa",
+    "descripcion": "Ha habido una subida de tensión en casa y se ha estropeado el microondas."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 9,
+  "fields": {
+    "titulo": "Auriculares estropeados",
+    "descripcion": "Un lado de tus auriculares ha dejado de funcionar justo antes del viaje en autobús."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 10,
+  "fields": {
+    "titulo": "Cable de cargador roto",
+    "descripcion": "El cable del móvil ha dejado de cargar por un mal contacto en la clavija."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 11,
+  "fields": {
+    "titulo": "Recargo por datos móviles",
+    "descripcion": "Has superado el límite de datos de tu tarifa mensual y la compañía te cobra un tramo extra."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 12,
+  "fields": {
+    "titulo": "Pérdida de memoria USB",
+    "descripcion": "Has perdido el pendrive donde tenías guardadas las presentaciones del trimestre."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 13,
+  "fields": {
+    "titulo": "Suscripción olvidada",
+    "descripcion": "Se ha renovado automáticamente la suscripción de una aplicación que ya no utilizas."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 14,
+  "fields": {
+    "titulo": "Fallo en el mando de la consola",
+    "descripcion": "Uno de los botones del mando ha dejado de responder durante la partida del fin de semana."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 15,
+  "fields": {
+    "titulo": "Tarjeta de memoria llena",
+    "descripcion": "Necesitas una tarjeta SD de mayor capacidad para el proyecto audiovisual de clase."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 16,
+  "fields": {
+    "titulo": "Funda de protección rota",
+    "descripcion": "La carcasa del móvil se ha partido al intentar quitarla para limpiar el dispositivo."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 17,
+  "fields": {
+    "titulo": "Batería de reloj agotada",
+    "descripcion": "Se ha agotado la pila de tu reloj y necesitas cambiarla para no llegar tarde a los exámenes."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 18,
+  "fields": {
+    "titulo": "Avería en la bicicleta",
+    "descripcion": "Se ha roto la cadena de la bicicleta de camino al instituto y debes llevarla al taller."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 19,
+  "fields": {
+    "titulo": "Pérdida de la tarjeta de transporte",
+    "descripcion": "Has extraviado el abono de transporte y tienes que pagar billetes sencillos esta semana."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 20,
+  "fields": {
+    "titulo": "Olvido del bonobús",
+    "descripcion": "Te has dejado el pase de autobús en casa y debes comprar un billete de urgencia con recargo."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 21,
+  "fields": {
+    "titulo": "Pinchazo en el patinete eléctrico",
+    "descripcion": "La rueda trasera del patinete eléctrico se ha pinchado a mitad de trayecto."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 22,
+  "fields": {
+    "titulo": "Viaje en taxi por retraso",
+    "descripcion": "Se te ha pegado las sábanas y has tenido que coger un taxi de urgencia para no perder un examen."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 23,
+  "fields": {
+    "titulo": "Limpieza de cadena y engrase",
+    "descripcion": "La bicicleta hace un ruido extraño y necesitas comprar líquido desengrasante y lubricante."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 24,
+  "fields": {
+    "titulo": "Candado de bici rascado/atasco",
+    "descripcion": "La cerradura del candado de tu bici se ha encasquillado y has tenido que pedir ayuda en el taller."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 25,
+  "fields": {
+    "titulo": "Revisión en el dentista",
+    "descripcion": "En la revisión anual te han detectado una pequeña caries que requiere un empaste inmediato."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 26,
+  "fields": {
+    "titulo": "Rotura de gafas de ver",
+    "descripcion": "Se ha soltado un tornillo de la patilla de tus gafas graduadas en medio de la clase."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 27,
+  "fields": {
+    "titulo": "Infección y medicina",
+    "descripcion": "Has pillado un resfriado fuerte y debes comprar jarabe e ibuprofeno en la farmacia."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 28,
+  "fields": {
+    "titulo": "Peluquería de urgencia",
+    "descripcion": "Necesitas cortarte el pelo antes de la foto oficial del orla o evento escolar."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 29,
+  "fields": {
+    "titulo": "Aparato de ortodoncia roto",
+    "descripcion": "Se ha desprendido un bracket de la ortodoncia y requiere una consulta no programada."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 30,
+  "fields": {
+    "titulo": "Protector solar y botiquín",
+    "descripcion": "Durante la excursión a la montaña has tenido que comprar crema solar y tiritas para las rozaduras."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 31,
+  "fields": {
+    "titulo": "Molestia muscular en deporte",
+    "descripcion": "Un tirón en el entrenamiento te obliga a comprar una tobillera elástica de compresión."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 32,
+  "fields": {
+    "titulo": "Calculadora científica rota",
+    "descripcion": "La pantalla de tu calculadora falla y necesitas una nueva para el examen de Matemáticas."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 33,
+  "fields": {
+    "titulo": "Pérdida del libro de lectura",
+    "descripcion": "Has olvidado el libro de lectura obligatoria en el parque y debes comprar otro ejemplar."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 34,
+  "fields": {
+    "titulo": "Material de dibujo técnico",
+    "descripcion": "El profesor de Plástica pide compás, escuadra y cartabón graduados para la nueva lámina."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 35,
+  "fields": {
+    "titulo": "Olvido de la bata de laboratorio",
+    "descripcion": "No llevas la bata para la práctica de Química y debes alquilar o comprar una de repuesto."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 36,
+  "fields": {
+    "titulo": "Multa en la biblioteca",
+    "descripcion": "Has devuelto con dos semanas de retraso el libro prestado y debes abonar la penalización."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 37,
+  "fields": {
+    "titulo": "Impresión de dosier a color",
+    "descripcion": "Debes imprimir y encuadernar un trabajo en la copistería del barrio a todo color."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 38,
+  "fields": {
+    "titulo": "Pérdida del estuche completo",
+    "descripcion": "Te has dejado el estuche en el aula de música y no ha aparecido; debes reponer el material básico."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 39,
+  "fields": {
+    "titulo": "Fianza de la taquilla",
+    "descripcion": "Debes abonar la señal para obtener la llave de tu taquilla del instituto este trimestre."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 40,
+  "fields": {
+    "titulo": "Cuaderno de música especial",
+    "descripcion": "Se requiere un cuaderno de pentagramas de formato especial para la asignatura de Música."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 41,
+  "fields": {
+    "titulo": "Bote para cumpleaños",
+    "descripcion": "Tus amigos están organizando un bote conjunto para comprar el regalo de cumpleaños de un compañero."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 42,
+  "fields": {
+    "titulo": "Entrada de cine imprevista",
+    "descripcion": "El grupo de clase decide ir al cine a ver un estreno del que todos están hablando."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 43,
+  "fields": {
+    "titulo": "Picnic de convivencia",
+    "descripcion": "Debes aportar comida o refrescos para la jornada de convivencia del grupo-clase."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 44,
+  "fields": {
+    "titulo": "Descuento no aplicado",
+    "descripcion": "Has olvidado llevar el Carnet Joven y te han cobrado la tarifa completa de entrada al museo."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 45,
+  "fields": {
+    "titulo": "Olvido del almuerzo",
+    "descripcion": "Te has dejado el bocadillo en la cocina y tienes que comprar algo en la cafetería del centro."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 46,
+  "fields": {
+    "titulo": "Regalo de despedida",
+    "descripcion": "Participas en la colecta voluntaria para comprar un detalle al profesor que se jubila."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 47,
+  "fields": {
+    "titulo": "Entrada a torneo deportivo",
+    "descripcion": "Tus compañeros participan en un torneo local y compras la entrada para ir a animarlos."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 48,
+  "fields": {
+    "titulo": "Pérdida de las llaves de casa",
+    "descripcion": "Se te han caído las llaves y hay que ir al cerrajero a hacer una copia de la llave maestra."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 49,
+  "fields": {
+    "titulo": "Rotura de calzado deportivo",
+    "descripcion": "Se ha despegado la suela de tus zapatillas durante la clase de Educación Física."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 50,
+  "fields": {
+    "titulo": "Ropa manchada con tinta",
+    "descripcion": "Un bolígrafo se ha reventado dentro de tu sudadera favorita y necesitas un limpiador especial."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 51,
+  "fields": {
+    "titulo": "Botella reutilizable perdida",
+    "descripcion": "Has dejado la botella de aluminio en el pabellón deportivo y debes comprar otra para entrenar."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 52,
+  "fields": {
+    "titulo": "Daño accidental en casa",
+    "descripcion": "Has tirado sin querer una taza de la cocina y decides poner dinero para reponerla."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 53,
+  "fields": {
+    "titulo": "Paraguas roto en día de lluvia",
+    "descripcion": "El viento ha doblado las varillas de tu paraguas de camino a clase en plena tormenta."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 54,
+  "fields": {
+    "titulo": "Disfraz para actividad escolar",
+    "descripcion": "Debes conseguir una prenda específica para la representación teatral de Historia."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 55,
+  "fields": {
+    "titulo": "Gastos de envío imprevistos",
+    "descripcion": "Al comprar un libro online no has alcanzado el pedido mínimo y debes pagar gastos de envío."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 56,
+  "fields": {
+    "titulo": "Lavado urgente de equipación",
+    "descripcion": "Has manchado de barro la equipación del equipo y debes llevarla a la lavandería rápida."
+  }
+},
+{
+  "model": "juego.situacionnarrativa",
+  "pk": 57,
+  "fields": {
+    "titulo": "Subida de cuota del club",
+    "descripcion": "El club deportivo del barrio ha actualizado la cuota de mantenimiento del equipamiento."
+  }
+}
+]

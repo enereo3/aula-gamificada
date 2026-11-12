@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import User
 from PIL import Image
-
+import math
 
 AVATAR_CHOICES = [
     ('bi-robot', '🤖 Robot'),
@@ -247,6 +247,12 @@ class EventoAleatorio(models.Model):
     recompensa_salud = models.IntegerField(default=0)
     recompensa_felicidad = models.IntegerField(default=0)
 
+    @property
+    def lista_opciones(self):
+        if not self.opciones_test:
+            return []
+        # Divide por comas, elimina espacios en blanco alrededor y descarta vacíos
+        return [opcion.strip() for opcion in self.opciones_test.split(',') if opcion.strip()]
     
     def __str__(self):
         return f"[{self.get_curso_display()} - {self.temario}] {self.pregunta_matematica}"
@@ -260,7 +266,7 @@ class EventoAlumno(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
     titulo_narrativo = models.CharField(max_length=150, blank=True, default="")
     descripcion_narrativa = models.TextField(blank=True, default="")
-    respuesta_alumno = models.CharField(max_length=255, blank=True, default="")
+    respuesta_alumno = models.TextField(blank=True, default="", null=True)
     pendiente_revision = models.BooleanField(default=False)
     mitigado = models.BooleanField(default=False)
     respuesta_enviada = models.CharField(max_length=255, blank=True, null=True)
@@ -278,7 +284,6 @@ class EventoAlumno(models.Model):
 
     @property
     def lista_opciones(self):
-        """Devuelve las opciones del test como una lista limpia sin espacios extras."""
         if self.opciones_test:
             return [opc.strip() for opc in self.opciones_test.split(',') if opc.strip()]
         return []
@@ -310,10 +315,7 @@ class SituacionNarrativa(models.Model):
     def __str__(self):
         return self.titulo
 
-from django.db import models
-from django.contrib.auth.models import User
-from decimal import Decimal
-import math
+
 
 class CartaTienda(models.Model):
     clase = models.ForeignKey('Clase', on_delete=models.CASCADE, related_name='cartas_tienda')
