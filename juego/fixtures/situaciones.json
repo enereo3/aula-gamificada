@@ -3,40 +3,40 @@
   "model": "juego.situacionnarrativa",
   "pk": 1,
   "fields": {
-    "titulo": "AverÌa en la bicicleta",
-    "descripcion": "Al ir a clase se ha salido la cadena y has tenido que llevar la bici al taller de reparaciÛn."
+    "titulo": "Aver√≠a en la bicicleta",
+    "descripcion": "Al ir a clase se ha salido la cadena y has tenido que llevar la bici al taller de reparaci√≥n."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 2,
   "fields": {
-    "titulo": "Factura imprevista del mÛvil",
-    "descripcion": "Has superado el lÌmite de datos del bono mensual y te ha llegado un recargo en la factura."
+    "titulo": "Factura imprevista del m√≥vil",
+    "descripcion": "Has superado el l√≠mite de datos del bono mensual y te ha llegado un recargo en la factura."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 3,
   "fields": {
-    "titulo": "RevisiÛn en el dentista",
-    "descripcion": "En la revisiÛn anual te han detectado una pequeÒa caries que requiere empaste."
+    "titulo": "Revisi√≥n en el dentista",
+    "descripcion": "En la revisi√≥n anual te han detectado una peque√±a caries que requiere empaste."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 4,
   "fields": {
-    "titulo": "PÈrdida de la tarjeta de transporte",
-    "descripcion": "Has olvidado el abono de autob˙s en casa y has tenido que comprar un billete sencillo de urgencia."
+    "titulo": "P√©rdida de la tarjeta de transporte",
+    "descripcion": "Has olvidado el abono de autob√∫s en casa y has tenido que comprar un billete sencillo de urgencia."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 5,
   "fields": {
-    "titulo": "Pantalla del mÛvil rota",
-    "descripcion": "Se te ha caÌdo el telÈfono al suelo al salir de clase y la pantalla se ha agrietado."
+    "titulo": "Pantalla del m√≥vil rota",
+    "descripcion": "Se te ha ca√≠do el tel√©fono al suelo al salir de clase y la pantalla se ha agrietado."
   }
 },
 {
@@ -44,23 +44,23 @@
   "pk": 6,
   "fields": {
     "titulo": "Compra de material escolar",
-    "descripcion": "El profesor ha pedido un cuaderno especial y una calculadora cientÌfica para la nueva unidad."
+    "descripcion": "El profesor ha pedido un cuaderno especial y una calculadora cient√≠fica para la nueva unidad."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 7,
   "fields": {
-    "titulo": "CumpleaÒos de un amigo",
-    "descripcion": "Tus compaÒeros est·n organizando un bote com˙n para comprar un regalo de cumpleaÒos."
+    "titulo": "Cumplea√±os de un amigo",
+    "descripcion": "Tus compa√±eros est√°n organizando un bote com√∫n para comprar un regalo de cumplea√±os."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 8,
   "fields": {
-    "titulo": "ElectrodomÈstico roto en casa",
-    "descripcion": "Ha habido una subida de tensiÛn en casa y se ha estropeado el microondas."
+    "titulo": "Electrodom√©stico roto en casa",
+    "descripcion": "Ha habido una subida de tensi√≥n en casa y se ha estropeado el microondas."
   }
 },
 {
@@ -68,7 +68,7 @@
   "pk": 9,
   "fields": {
     "titulo": "Auriculares estropeados",
-    "descripcion": "Un lado de tus auriculares ha dejado de funcionar justo antes del viaje en autob˙s."
+    "descripcion": "Un lado de tus auriculares ha dejado de funcionar justo antes del viaje en autob√∫s."
   }
 },
 {
@@ -76,31 +76,31 @@
   "pk": 10,
   "fields": {
     "titulo": "Cable de cargador roto",
-    "descripcion": "El cable del mÛvil ha dejado de cargar por un mal contacto en la clavija."
+    "descripcion": "El cable del m√≥vil ha dejado de cargar por un mal contacto en la clavija."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 11,
   "fields": {
-    "titulo": "Recargo por datos mÛviles",
-    "descripcion": "Has superado el lÌmite de datos de tu tarifa mensual y la compaÒÌa te cobra un tramo extra."
+    "titulo": "Recargo por datos m√≥viles",
+    "descripcion": "Has superado el l√≠mite de datos de tu tarifa mensual y la compa√±√≠a te cobra un tramo extra."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 12,
   "fields": {
-    "titulo": "PÈrdida de memoria USB",
-    "descripcion": "Has perdido el pendrive donde tenÌas guardadas las presentaciones del trimestre."
+    "titulo": "P√©rdida de memoria USB",
+    "descripcion": "Has perdido el pendrive donde ten√≠as guardadas las presentaciones del trimestre."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 13,
   "fields": {
-    "titulo": "SuscripciÛn olvidada",
-    "descripcion": "Se ha renovado autom·ticamente la suscripciÛn de una aplicaciÛn que ya no utilizas."
+    "titulo": "Suscripci√≥n olvidada",
+    "descripcion": "Se ha renovado autom√°ticamente la suscripci√≥n de una aplicaci√≥n que ya no utilizas."
   }
 },
 {
@@ -123,23 +123,23 @@
   "model": "juego.situacionnarrativa",
   "pk": 16,
   "fields": {
-    "titulo": "Funda de protecciÛn rota",
-    "descripcion": "La carcasa del mÛvil se ha partido al intentar quitarla para limpiar el dispositivo."
+    "titulo": "Funda de protecci√≥n rota",
+    "descripcion": "La carcasa del m√≥vil se ha partido al intentar quitarla para limpiar el dispositivo."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 17,
   "fields": {
-    "titulo": "BaterÌa de reloj agotada",
-    "descripcion": "Se ha agotado la pila de tu reloj y necesitas cambiarla para no llegar tarde a los ex·menes."
+    "titulo": "Bater√≠a de reloj agotada",
+    "descripcion": "Se ha agotado la pila de tu reloj y necesitas cambiarla para no llegar tarde a los ex√°menes."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 18,
   "fields": {
-    "titulo": "AverÌa en la bicicleta",
+    "titulo": "Aver√≠a en la bicicleta",
     "descripcion": "Se ha roto la cadena de la bicicleta de camino al instituto y debes llevarla al taller."
   }
 },
@@ -147,7 +147,7 @@
   "model": "juego.situacionnarrativa",
   "pk": 19,
   "fields": {
-    "titulo": "PÈrdida de la tarjeta de transporte",
+    "titulo": "P√©rdida de la tarjeta de transporte",
     "descripcion": "Has extraviado el abono de transporte y tienes que pagar billetes sencillos esta semana."
   }
 },
@@ -155,16 +155,16 @@
   "model": "juego.situacionnarrativa",
   "pk": 20,
   "fields": {
-    "titulo": "Olvido del bonob˙s",
-    "descripcion": "Te has dejado el pase de autob˙s en casa y debes comprar un billete de urgencia con recargo."
+    "titulo": "Olvido del bonob√∫s",
+    "descripcion": "Te has dejado el pase de autob√∫s en casa y debes comprar un billete de urgencia con recargo."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 21,
   "fields": {
-    "titulo": "Pinchazo en el patinete elÈctrico",
-    "descripcion": "La rueda trasera del patinete elÈctrico se ha pinchado a mitad de trayecto."
+    "titulo": "Pinchazo en el patinete el√©ctrico",
+    "descripcion": "La rueda trasera del patinete el√©ctrico se ha pinchado a mitad de trayecto."
   }
 },
 {
@@ -172,7 +172,7 @@
   "pk": 22,
   "fields": {
     "titulo": "Viaje en taxi por retraso",
-    "descripcion": "Se te ha pegado las s·banas y has tenido que coger un taxi de urgencia para no perder un examen."
+    "descripcion": "Se te ha pegado las s√°banas y has tenido que coger un taxi de urgencia para no perder un examen."
   }
 },
 {
@@ -180,7 +180,7 @@
   "pk": 23,
   "fields": {
     "titulo": "Limpieza de cadena y engrase",
-    "descripcion": "La bicicleta hace un ruido extraÒo y necesitas comprar lÌquido desengrasante y lubricante."
+    "descripcion": "La bicicleta hace un ruido extra√±o y necesitas comprar l√≠quido desengrasante y lubricante."
   }
 },
 {
@@ -195,8 +195,8 @@
   "model": "juego.situacionnarrativa",
   "pk": 25,
   "fields": {
-    "titulo": "RevisiÛn en el dentista",
-    "descripcion": "En la revisiÛn anual te han detectado una pequeÒa caries que requiere un empaste inmediato."
+    "titulo": "Revisi√≥n en el dentista",
+    "descripcion": "En la revisi√≥n anual te han detectado una peque√±a caries que requiere un empaste inmediato."
   }
 },
 {
@@ -211,7 +211,7 @@
   "model": "juego.situacionnarrativa",
   "pk": 27,
   "fields": {
-    "titulo": "InfecciÛn y medicina",
+    "titulo": "Infecci√≥n y medicina",
     "descripcion": "Has pillado un resfriado fuerte y debes comprar jarabe e ibuprofeno en la farmacia."
   }
 },
@@ -219,7 +219,7 @@
   "model": "juego.situacionnarrativa",
   "pk": 28,
   "fields": {
-    "titulo": "PeluquerÌa de urgencia",
+    "titulo": "Peluquer√≠a de urgencia",
     "descripcion": "Necesitas cortarte el pelo antes de la foto oficial del orla o evento escolar."
   }
 },
@@ -235,8 +235,8 @@
   "model": "juego.situacionnarrativa",
   "pk": 30,
   "fields": {
-    "titulo": "Protector solar y botiquÌn",
-    "descripcion": "Durante la excursiÛn a la montaÒa has tenido que comprar crema solar y tiritas para las rozaduras."
+    "titulo": "Protector solar y botiqu√≠n",
+    "descripcion": "Durante la excursi√≥n a la monta√±a has tenido que comprar crema solar y tiritas para las rozaduras."
   }
 },
 {
@@ -244,22 +244,22 @@
   "pk": 31,
   "fields": {
     "titulo": "Molestia muscular en deporte",
-    "descripcion": "Un tirÛn en el entrenamiento te obliga a comprar una tobillera el·stica de compresiÛn."
+    "descripcion": "Un tir√≥n en el entrenamiento te obliga a comprar una tobillera el√°stica de compresi√≥n."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 32,
   "fields": {
-    "titulo": "Calculadora cientÌfica rota",
-    "descripcion": "La pantalla de tu calculadora falla y necesitas una nueva para el examen de Matem·ticas."
+    "titulo": "Calculadora cient√≠fica rota",
+    "descripcion": "La pantalla de tu calculadora falla y necesitas una nueva para el examen de Matem√°ticas."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 33,
   "fields": {
-    "titulo": "PÈrdida del libro de lectura",
+    "titulo": "P√©rdida del libro de lectura",
     "descripcion": "Has olvidado el libro de lectura obligatoria en el parque y debes comprar otro ejemplar."
   }
 },
@@ -267,8 +267,8 @@
   "model": "juego.situacionnarrativa",
   "pk": 34,
   "fields": {
-    "titulo": "Material de dibujo tÈcnico",
-    "descripcion": "El profesor de Pl·stica pide comp·s, escuadra y cartabÛn graduados para la nueva l·mina."
+    "titulo": "Material de dibujo t√©cnico",
+    "descripcion": "El profesor de Pl√°stica pide comp√°s, escuadra y cartab√≥n graduados para la nueva l√°mina."
   }
 },
 {
@@ -276,7 +276,7 @@
   "pk": 35,
   "fields": {
     "titulo": "Olvido de la bata de laboratorio",
-    "descripcion": "No llevas la bata para la pr·ctica de QuÌmica y debes alquilar o comprar una de repuesto."
+    "descripcion": "No llevas la bata para la pr√°ctica de Qu√≠mica y debes alquilar o comprar una de repuesto."
   }
 },
 {
@@ -284,23 +284,23 @@
   "pk": 36,
   "fields": {
     "titulo": "Multa en la biblioteca",
-    "descripcion": "Has devuelto con dos semanas de retraso el libro prestado y debes abonar la penalizaciÛn."
+    "descripcion": "Has devuelto con dos semanas de retraso el libro prestado y debes abonar la penalizaci√≥n."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 37,
   "fields": {
-    "titulo": "ImpresiÛn de dosier a color",
-    "descripcion": "Debes imprimir y encuadernar un trabajo en la copisterÌa del barrio a todo color."
+    "titulo": "Impresi√≥n de dosier a color",
+    "descripcion": "Debes imprimir y encuadernar un trabajo en la copister√≠a del barrio a todo color."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 38,
   "fields": {
-    "titulo": "PÈrdida del estuche completo",
-    "descripcion": "Te has dejado el estuche en el aula de m˙sica y no ha aparecido; debes reponer el material b·sico."
+    "titulo": "P√©rdida del estuche completo",
+    "descripcion": "Te has dejado el estuche en el aula de m√∫sica y no ha aparecido; debes reponer el material b√°sico."
   }
 },
 {
@@ -308,23 +308,23 @@
   "pk": 39,
   "fields": {
     "titulo": "Fianza de la taquilla",
-    "descripcion": "Debes abonar la seÒal para obtener la llave de tu taquilla del instituto este trimestre."
+    "descripcion": "Debes abonar la se√±al para obtener la llave de tu taquilla del instituto este trimestre."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 40,
   "fields": {
-    "titulo": "Cuaderno de m˙sica especial",
-    "descripcion": "Se requiere un cuaderno de pentagramas de formato especial para la asignatura de M˙sica."
+    "titulo": "Cuaderno de m√∫sica especial",
+    "descripcion": "Se requiere un cuaderno de pentagramas de formato especial para la asignatura de M√∫sica."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 41,
   "fields": {
-    "titulo": "Bote para cumpleaÒos",
-    "descripcion": "Tus amigos est·n organizando un bote conjunto para comprar el regalo de cumpleaÒos de un compaÒero."
+    "titulo": "Bote para cumplea√±os",
+    "descripcion": "Tus amigos est√°n organizando un bote conjunto para comprar el regalo de cumplea√±os de un compa√±ero."
   }
 },
 {
@@ -332,7 +332,7 @@
   "pk": 42,
   "fields": {
     "titulo": "Entrada de cine imprevista",
-    "descripcion": "El grupo de clase decide ir al cine a ver un estreno del que todos est·n hablando."
+    "descripcion": "El grupo de clase decide ir al cine a ver un estreno del que todos est√°n hablando."
   }
 },
 {
@@ -356,7 +356,7 @@
   "pk": 45,
   "fields": {
     "titulo": "Olvido del almuerzo",
-    "descripcion": "Te has dejado el bocadillo en la cocina y tienes que comprar algo en la cafeterÌa del centro."
+    "descripcion": "Te has dejado el bocadillo en la cocina y tienes que comprar algo en la cafeter√≠a del centro."
   }
 },
 {
@@ -372,15 +372,15 @@
   "pk": 47,
   "fields": {
     "titulo": "Entrada a torneo deportivo",
-    "descripcion": "Tus compaÒeros participan en un torneo local y compras la entrada para ir a animarlos."
+    "descripcion": "Tus compa√±eros participan en un torneo local y compras la entrada para ir a animarlos."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 48,
   "fields": {
-    "titulo": "PÈrdida de las llaves de casa",
-    "descripcion": "Se te han caÌdo las llaves y hay que ir al cerrajero a hacer una copia de la llave maestra."
+    "titulo": "P√©rdida de las llaves de casa",
+    "descripcion": "Se te han ca√≠do las llaves y hay que ir al cerrajero a hacer una copia de la llave maestra."
   }
 },
 {
@@ -388,7 +388,7 @@
   "pk": 49,
   "fields": {
     "titulo": "Rotura de calzado deportivo",
-    "descripcion": "Se ha despegado la suela de tus zapatillas durante la clase de EducaciÛn FÌsica."
+    "descripcion": "Se ha despegado la suela de tus zapatillas durante la clase de Educaci√≥n F√≠sica."
   }
 },
 {
@@ -396,7 +396,7 @@
   "pk": 50,
   "fields": {
     "titulo": "Ropa manchada con tinta",
-    "descripcion": "Un bolÌgrafo se ha reventado dentro de tu sudadera favorita y necesitas un limpiador especial."
+    "descripcion": "Un bol√≠grafo se ha reventado dentro de tu sudadera favorita y necesitas un limpiador especial."
   }
 },
 {
@@ -404,14 +404,14 @@
   "pk": 51,
   "fields": {
     "titulo": "Botella reutilizable perdida",
-    "descripcion": "Has dejado la botella de aluminio en el pabellÛn deportivo y debes comprar otra para entrenar."
+    "descripcion": "Has dejado la botella de aluminio en el pabell√≥n deportivo y debes comprar otra para entrenar."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 52,
   "fields": {
-    "titulo": "DaÒo accidental en casa",
+    "titulo": "Da√±o accidental en casa",
     "descripcion": "Has tirado sin querer una taza de la cocina y decides poner dinero para reponerla."
   }
 },
@@ -419,7 +419,7 @@
   "model": "juego.situacionnarrativa",
   "pk": 53,
   "fields": {
-    "titulo": "Paraguas roto en dÌa de lluvia",
+    "titulo": "Paraguas roto en d√≠a de lluvia",
     "descripcion": "El viento ha doblado las varillas de tu paraguas de camino a clase en plena tormenta."
   }
 },
@@ -428,23 +428,23 @@
   "pk": 54,
   "fields": {
     "titulo": "Disfraz para actividad escolar",
-    "descripcion": "Debes conseguir una prenda especÌfica para la representaciÛn teatral de Historia."
+    "descripcion": "Debes conseguir una prenda espec√≠fica para la representaci√≥n teatral de Historia."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 55,
   "fields": {
-    "titulo": "Gastos de envÌo imprevistos",
-    "descripcion": "Al comprar un libro online no has alcanzado el pedido mÌnimo y debes pagar gastos de envÌo."
+    "titulo": "Gastos de env√≠o imprevistos",
+    "descripcion": "Al comprar un libro online no has alcanzado el pedido m√≠nimo y debes pagar gastos de env√≠o."
   }
 },
 {
   "model": "juego.situacionnarrativa",
   "pk": 56,
   "fields": {
-    "titulo": "Lavado urgente de equipaciÛn",
-    "descripcion": "Has manchado de barro la equipaciÛn del equipo y debes llevarla a la lavanderÌa r·pida."
+    "titulo": "Lavado urgente de equipaci√≥n",
+    "descripcion": "Has manchado de barro la equipaci√≥n del equipo y debes llevarla a la lavander√≠a r√°pida."
   }
 },
 {
