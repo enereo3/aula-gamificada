@@ -105,6 +105,12 @@
                                 <td>
                                     <div class="fw-bold">{{ p.usuario.first_name }} {{ p.usuario.last_name }}</div>
                                     <small class="text-muted">@{{ p.usuario.username }}</small>
+                                    {% if p.num_retos_sin_hacer > 0 %}
+                                        <span class="badge rounded-pill bg-warning text-dark ms-1"
+                                            title="Tiene {{ p.num_retos_sin_hacer }} reto(s) pendiente(s) de responder">
+                                            <i class="bi bi-hourglass-split"></i> {{ p.num_retos_sin_hacer }}
+                                        </span>
+                                    {% endif %}
                                 </td>
                                 <td><span class="badge bg-info text-dark">{{ p.clase.nombre|default:"Sin Clase" }}</span></td>
                                 

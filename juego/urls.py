@@ -17,6 +17,7 @@ urlpatterns = [
     # --- PANEL DOCENTE Y GESTIÓN DE AULA ---
     path('profesor/', views.profesor_panel, name='profesor_panel'),
     path('profesor/alumno/<int:personaje_id>/', views.profesor_detalle_alumno, name='profesor_detalle_alumno'),
+    path('profesor/reto/<int:evento_alumno_id>/dar-por-perdido/', views.dar_reto_por_perdido, name='dar_reto_por_perdido'),
     path('profesor/alumno/<int:personaje_id>/cambiar-salario/', views.cambiar_salario_alumno, name='cambiar_salario_alumno'),
     path('profesor/crear-clase/', views.crear_clase, name='crear_clase'),
     path('profesor/eliminar-clase/<int:clase_id>/', views.eliminar_clase, name='eliminar_clase'),

@@ -111,6 +111,15 @@
                                             {% else %}
                                                 <span class="badge bg-warning text-dark">Pendiente</span>
                                             {% endif %}
+                                            {% if not r.resuelto and not r.pendiente_revision %}
+                                                <form method="POST" action="{% url 'dar_reto_por_perdido' r.id %}" class="d-inline"
+                                                    onsubmit="return confirm('¿Dar este reto por perdido? Se descontarán {{ r.evento.penalizacion_dinero }}€ al alumno y se aplicará la penalización completa.');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        <i class="bi bi-x-circle"></i> Dar por perdido
+                                                    </button>
+                                                </form>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             {% if r.resuelto %}

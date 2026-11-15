@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.core.paginator import Paginator
 from django.urls import reverse
 from django.utils import timezone
@@ -424,7 +424,11 @@ def profesor_panel(request):
         clase_seleccionada = clases.first()
 
     if clase_seleccionada:
-        personajes = Personaje.objects.filter(clase=clase_seleccionada).select_related('usuario')
+        personajes = Personaje.objects.filter(clase=clase_seleccionada).select_related('usuario').annotate(
+            num_retos_sin_hacer=Count('eventos_pendientes',
+                filter=Q(eventos_pendientes__resuelto=False,eventos_pendientes__pendiente_revision=False)
+            )
+        )
         revisiones_pendientes = EventoAlumno.objects.filter(
             estado_revision='PENDIENTE',
             personaje__clase=clase_seleccionada
@@ -496,6 +500,65 @@ def profesor_detalle_alumno(request, personaje_id):
         'porcentaje_acierto': porcentaje_acierto,
         'config_presupuesto': CONFIG_PRESUPUESTO
     })
+
+
+
+@login_required
+def dar_reto_por_perdido(request, evento_alumno_id):
+    """Permite al docente cerrar un reto pendiente del alumno aplicando la penalización completa."""
+    es_profesor = request.user.is_staff or Clase.objects.filter(profesor=request.user).exists()
+    if not es_profesor:
+        messages.error(request, "Acceso restringido al docente.")
+        return redirect('dashboard')
+
+    evento_alumno = get_object_or_404(
+        EventoAlumno,
+        id=evento_alumno_id,
+        personaje__clase__profesor=request.user
+    )
+    personaje = evento_alumno.personaje
+
+    if request.method == 'POST':
+        if evento_alumno.resuelto:
+            messages.warning(request, "Este reto ya estaba resuelto anteriormente.")
+            return redirect('profesor_detalle_alumno', personaje_id=personaje.id)
+
+        reto = evento_alumno.evento
+
+        # 1. Marcar el reto como resuelto sin éxito y sin mitigación
+        evento_alumno.resuelto = True
+        evento_alumno.pendiente_revision = False
+        evento_alumno.exito_reto = False
+        evento_alumno.mitigado = False
+        if not evento_alumno.respuesta_alumno:
+            evento_alumno.respuesta_alumno = "[No respondido - Dado por perdido por el docente]"
+        evento_alumno.save()
+
+        # 2. Aplicar penalización completa al personaje
+        pen_dinero = Decimal(str(reto.penalizacion_dinero))
+        pen_salud = int(reto.penalizacion_salud)
+        pen_felicidad = int(reto.penalizacion_felicidad)
+
+        personaje.dinero_disponible -= pen_dinero
+        personaje.salud = max(0, personaje.salud - pen_salud)
+        personaje.felicidad = max(0, personaje.felicidad - pen_felicidad)
+        personaje.save()
+
+        # 3. Registrar movimiento en el historial financiero
+        Transaccion.objects.create(
+            personaje=personaje,
+            concepto=f"Imprevisto no resuelto: {evento_alumno.titulo_narrativo or reto.temario}",
+            monto=-pen_dinero,
+            tipo='GASTO',
+            explicacion_operacion="Reto pendiente dado por perdido por el docente (Penalización completa)."
+        )
+
+        messages.warning(
+            request,
+            f"Reto dado por perdido. Se ha aplicado la penalización completa (-{pen_dinero}€) a {personaje.usuario.get_full_name() or personaje.usuario.username}."
+        )
+
+    return redirect('profesor_detalle_alumno', personaje_id=personaje.id)
 
 
 @login_required
