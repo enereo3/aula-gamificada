@@ -19,6 +19,7 @@ urlpatterns = [
     path('profesor/alumno/<int:personaje_id>/', views.profesor_detalle_alumno, name='profesor_detalle_alumno'),
     path('profesor/alumno/<int:personaje_id>/cambiar-salario/', views.cambiar_salario_alumno, name='cambiar_salario_alumno'),
     path('profesor/crear-clase/', views.crear_clase, name='crear_clase'),
+    path('profesor/eliminar-clase/<int:clase_id>/', views.eliminar_clase, name='eliminar_clase'),
     path('profesor/crear-alumno/', views.crear_alumno, name='crear_alumno'),
     path('profesor/crear-alumnos-masivo/', views.crear_alumnos_masivo, name='crear_alumnos_masivo'),
     path('profesor/entregar-tarjeta/', views.entregar_tarjeta, name='entregar_tarjeta'),

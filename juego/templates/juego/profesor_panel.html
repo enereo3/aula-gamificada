@@ -430,6 +430,27 @@
                                     </div>
                                 </form>
                             </div>
+                            {% if clases %}
+                                <hr class="my-3">
+                                <h6 class="text-muted small fw-bold mb-2">Eliminar Grupo / Clase existente</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for c in clases %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                            <div>
+                                                <span class="fw-semibold">{{ c.nombre }}</span>
+                                                <span class="badge bg-secondary ms-1">{{ c.alumnos.count }} alumnos</span>
+                                            </div>
+                                            <form method="POST" action="{% url 'eliminar_clase' c.id %}"
+                                                onsubmit="return confirm('¿Seguro que quieres eliminar la clase «{{ c.nombre }}»? Los alumnos mantendrán su dinero y progreso, pero quedarán sin clase asignada y se borrarán las cartas de la tienda de este grupo.');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    Eliminar
+                                                </button>
+                                            </form>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
                         </div>
                         <div class="col-12 col-md-7">
                             <div class="p-3 border rounded bg-light">

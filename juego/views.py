@@ -524,6 +524,22 @@ def crear_clase(request):
     return redirect(f"{reverse('profesor_panel')}?clase_id={clase_id}")
 
 
+@login_required
+def eliminar_clase(request, clase_id):
+    es_profesor = request.user.is_staff or Clase.objects.filter(profesor=request.user).exists()
+    if not es_profesor:
+        messages.error(request, "Acceso no autorizado.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        clase = get_object_or_404(Clase, id=clase_id, profesor=request.user)
+        nombre_clase = clase.nombre
+        # Desvincular alumnos antes de borrar para asegurar que conserven su progreso
+        clase.alumnos.update(clase=None)
+        clase.delete()
+        messages.success(request, f"Clase '{nombre_clase}' eliminada. Sus alumnos han quedado disponibles sin grupo.")
+
+    return redirect('profesor_panel')
 
 @login_required
 def crear_alumno(request):

@@ -95,7 +95,7 @@ class Clase(models.Model):
 
 class Personaje(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='personaje')
-    clase = models.ForeignKey(Clase, on_delete=models.CASCADE, related_name='alumnos', null=True, blank=True)
+    clase = models.ForeignKey(Clase, on_delete=models.SET_NULL, related_name='alumnos', null=True, blank=True)
     
     avatar = models.CharField(max_length=50, choices=AVATAR_CHOICES, default='bi-robot')
     salud = models.IntegerField(default=100)
