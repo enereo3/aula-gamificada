@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Evita archivos .pyc y asegura que los logs salgan en tiempo real en Cloud Run
 ENV PYTHONDONTWRITEBYTECODE=1
