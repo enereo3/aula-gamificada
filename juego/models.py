@@ -284,13 +284,11 @@ class EventoAlumno(models.Model):
 
     @property
     def lista_opciones(self):
-        if self.opciones_test:
-            return [opc.strip() for opc in self.opciones_test.split(',') if opc.strip()]
-        return []
+        return self.evento.lista_opciones
 
     def __str__(self):
-        return f"[{self.get_curso_display()} - {self.temario}] {self.pregunta_matematica}"
-
+        return f"{self.personaje.usuario.username} - {self.evento.temario}"
+    
 
 class Transaccion(models.Model):
     TIPO_CHOICES = [

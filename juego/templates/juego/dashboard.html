@@ -42,7 +42,7 @@
                 </div>
             {% endfor %}
         {% endif %}
-
+        
         {% if es_demo %}
             <div class="alert alert-warning border-warning shadow-sm d-flex justify-content-between align-items-center mb-4">
                 <div>
@@ -70,7 +70,15 @@
                 </button>
             </div>
         </div>
-
+        {% if personaje.dinero_disponible < 0 %}
+            <div class="alert alert-danger d-flex align-items-center shadow-sm mb-3" role="alert">
+                <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+                <div>
+                    <strong>¡Estás en números rojos ({{ personaje.dinero_disponible }} €)!</strong>
+                    Tus cartas de recompensa están bloqueadas. Si llegas al cierre semanal con saldo negativo, se te cobrará un <strong>10% de comisión bancaria</strong> (mín. 5 €), perderás salud y felicidad, y se te <strong>embargará una carta</strong>. Puedes traspasar dinero desde tu Fondo de Emergencia si tienes ahorros.
+                </div>
+            </div>
+        {% endif %}
         <!-- INDICADORES PRINCIPALES -->
         <div class="row g-3 mb-4">
             <div class="col-12 col-md-4">

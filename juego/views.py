@@ -192,7 +192,6 @@ def responder_evento(request, evento_alumno_id):
     evento_alumno = get_object_or_404(EventoAlumno, id=evento_alumno_id, personaje__usuario=request.user)
     
     if request.method == 'POST':
-        # 1. Evitar que se sobrescriba o se cobre dos veces si ya fue respondido
         if evento_alumno.resuelto or evento_alumno.pendiente_revision:
             messages.warning(request, "Este imprevisto ya ha sido respondido.")
             return redirect('dashboard')
@@ -224,15 +223,14 @@ def responder_evento(request, evento_alumno_id):
             evento_alumno.resuelto = True
 
         else:
-            # Cualquier respuesta abierta (TEXTO, ABIERTA, etc.) se guarda y pasa a revisión docente
             evento_alumno.pendiente_revision = True
             evento_alumno.save()
             messages.info(request, "Tu propuesta ha sido guardada. El profesor la revisará en breve.")
             return redirect('dashboard')
 
         evento_alumno.exito_reto = es_correcta
+        personaje = evento_alumno.personaje
 
-        # CALCULAR PENALIZACIÓN CON MITIGACIÓN
         factor_multa = Decimal('1.0')
         if es_correcta:
             mitigacion = Decimal(str(reto.porcentaje_mitigacion)) / Decimal('100')
@@ -243,18 +241,15 @@ def responder_evento(request, evento_alumno_id):
             evento_alumno.mitigado = False
             messages.error(request, "Respuesta incorrecta. Se ha aplicado la penalización completa.")
 
-        # APLICAR IMPACTO EN EL PERSONAJE
         pen_dinero = Decimal(str(reto.penalizacion_dinero)) * factor_multa
         pen_salud = int(reto.penalizacion_salud * float(factor_multa))
         pen_felicidad = int(reto.penalizacion_felicidad * float(factor_multa))
 
-        personaje = evento_alumno.personaje
         personaje.dinero_disponible -= pen_dinero
         personaje.salud = max(0, personaje.salud - pen_salud)
         personaje.felicidad = max(0, personaje.felicidad - pen_felicidad)
         personaje.save()
 
-        # REGISTRAR TRANSACCIÓN
         Transaccion.objects.create(
             personaje=personaje,
             concepto=f"Imprevisto: {evento_alumno.titulo_narrativo or reto.temario}",
@@ -355,6 +350,7 @@ def evaluar_evento_abierto(request, evento_alumno_id):
         accion = request.POST.get('accion')
         es_correcta = (accion == 'aprobar')
         reto = evento_alumno.evento
+        personaje = evento_alumno.personaje
 
         factor_multa = Decimal('1.0')
         if es_correcta:
@@ -370,7 +366,6 @@ def evaluar_evento_abierto(request, evento_alumno_id):
         pen_salud = int(reto.penalizacion_salud * float(factor_multa))
         pen_felicidad = int(reto.penalizacion_felicidad * float(factor_multa))
 
-        personaje = evento_alumno.personaje
         personaje.dinero_disponible -= pen_dinero
         personaje.salud = max(0, personaje.salud - pen_salud)
         personaje.felicidad = max(0, personaje.felicidad - pen_felicidad)
@@ -395,6 +390,7 @@ def evaluar_evento_abierto(request, evento_alumno_id):
             return redirect(f"{reverse('profesor_panel')}?clase_id={personaje.clase.id}")
 
     return redirect('profesor_panel')
+
 
 def cerrar_sesion(request):
     logout(request)
@@ -502,7 +498,6 @@ def profesor_detalle_alumno(request, personaje_id):
     })
 
 
-
 @login_required
 def dar_reto_por_perdido(request, evento_alumno_id):
     """Permite al docente cerrar un reto pendiente del alumno aplicando la penalización completa."""
@@ -604,6 +599,7 @@ def eliminar_clase(request, clase_id):
 
     return redirect('profesor_panel')
 
+
 @login_required
 def crear_alumno(request):
     if request.method == 'POST':
@@ -700,9 +696,10 @@ def quitar_alumno_de_clase(request, personaje_id):
     messages.info(request, f"Se ha retirado a {nombre_alumno} de la clase.")
     return redirect(f"{reverse('profesor_panel')}?clase_id={clase_anterior_id}")
 
+
 @login_required
 def lanzar_evento_clase(request):
-    """Asigna un reto del banco a los alumnos fusionándolo con una situación narrativa aleatoria."""
+    """Asigna un reto del banco únicamente a los alumnos de la clase activa con una narrativa aleatoria."""
     es_profesor = request.user.is_staff or Clase.objects.filter(profesor=request.user).exists()
     if not es_profesor:
         messages.error(request, "Acceso restringido al docente.")
@@ -711,31 +708,34 @@ def lanzar_evento_clase(request):
     if request.method == 'POST':
         personaje_id = request.POST.get('personaje_id')
         evento_id = request.POST.get('evento_id')
-        clase_id = request.POST.get('clase_id')
+        clase_id = request.POST.get('clase_id', '')
 
-        # 1. Obtener el reto seleccionado desde la base de datos
+        if not clase_id or not clase_id.isdigit():
+            messages.error(request, "No se ha detectado una clase activa para enviar el reto.")
+            return redirect('profesor_panel')
+
+        clase = get_object_or_404(Clase, id=int(clase_id), profesor=request.user)
         evento_base = get_object_or_404(EventoAleatorio, id=evento_id)
 
-        # 2. Seleccionar una narrativa aleatoria del banco
         narrativas = list(SituacionNarrativa.objects.all())
         situacion = random.choice(narrativas) if narrativas else None
-
         titulo_envio = situacion.titulo if situacion else "Imprevisto Económico"
         descripcion_envio = situacion.descripcion if situacion else "Situación imprevista en tu día a día."
 
-        # 3. Asignar el evento a los alumnos
+        alumnos_clase = Personaje.objects.filter(clase=clase)
+
         if personaje_id == 'TODOS':
-            alumnos = Personaje.objects.filter(clase__profesor=request.user)
-            for p in alumnos:
+            for p in alumnos_clase:
                 EventoAlumno.objects.create(
                     personaje=p,
                     evento=evento_base,
                     titulo_narrativo=titulo_envio,
                     descripcion_narrativa=descripcion_envio
                 )
-            messages.success(request, f"¡Reto enviado a toda la clase ({alumnos.count()} alumnos) con la historia «{titulo_envio}»!")
+            messages.success(request, f"¡Reto enviado a toda la clase {clase.nombre} ({alumnos_clase.count()} alumnos) con la historia «{titulo_envio}»!")
+
         elif personaje_id:
-            p = get_object_or_404(Personaje, id=personaje_id)
+            p = get_object_or_404(Personaje, id=personaje_id, clase=clase)
             EventoAlumno.objects.create(
                 personaje=p,
                 evento=evento_base,
@@ -745,7 +745,9 @@ def lanzar_evento_clase(request):
             nombre = p.usuario.get_full_name() or p.usuario.username
             messages.success(request, f"¡Reto enviado a {nombre} con la historia «{titulo_envio}»!")
 
-    return redirect(f"{reverse('profesor_panel')}?clase_id={clase_id}")
+        return redirect(f"{reverse('profesor_panel')}?clase_id={clase.id}")
+
+    return redirect('profesor_panel')
 
 
 @login_required
@@ -763,7 +765,10 @@ def entregar_tarjeta(request):
         tarjeta = get_object_or_404(Tarjeta, id=tarjeta_id)
 
         if personaje_id == 'TODOS':
-            alumnos = Personaje.objects.filter(clase__profesor=request.user)
+            if clase_id and clase_id.isdigit():
+                alumnos = Personaje.objects.filter(clase_id=int(clase_id), clase__profesor=request.user)
+            else:
+                alumnos = Personaje.objects.filter(clase__profesor=request.user)
             for p in alumnos:
                 TarjetaAlumno.objects.create(personaje=p, tarjeta=tarjeta)
             messages.success(request, f"¡Tarjeta '{tarjeta.nombre}' entregada a toda la clase!")
@@ -784,8 +789,14 @@ def pagar_salarios(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        personajes = Personaje.objects.all()
         clase_id = request.POST.get('clase_id')
+        if clase_id and clase_id.isdigit():
+            personajes = Personaje.objects.filter(clase_id=int(clase_id))
+        else:
+            personajes = Personaje.objects.filter(clase__profesor=request.user)
+
+        embargos_totales = 0
+        en_numeros_rojos = 0
 
         for p in personajes:
             p.dinero_anterior = p.patrimonio_total
@@ -829,9 +840,57 @@ def pagar_salarios(request):
                         explicacion_operacion=f"Rentabilidad del 2% semanal sobre el Fondo de Emergencia (+{interes_generado}€)."
                     )
 
+            # 4. Penalización automática si cierra el ciclo en números rojos
+            if p.dinero_disponible < Decimal('0.00'):
+                en_numeros_rojos += 1
+                deuda = abs(p.dinero_disponible)
+                comision = max(Decimal('5.00'), (deuda * Decimal('0.10')).quantize(Decimal('0.01')))
+
+                p.dinero_disponible -= comision
+                p.salud = max(0, p.salud - 10)
+                p.felicidad = max(0, p.felicidad - 15)
+
+                Transaccion.objects.create(
+                    personaje=p,
+                    monto=-comision,
+                    concepto="Comisión bancaria por números rojos (10%)",
+                    tipo='GASTO',
+                    explicacion_operacion=(
+                        f"Penalización por cerrar la semana en descubierto (-{deuda}€): "
+                        f"-{comision}€ de intereses, -10 Salud y -15 Felicidad."
+                    )
+                )
+
+                # Embargo de la carta activa más antigua si posee alguna
+                carta_embargada = CartaAlumno.objects.filter(
+                    personaje=p,
+                    estado='ACTIVA'
+                ).order_by('fecha_compra').first()
+
+                if carta_embargada:
+                    carta_embargada.estado = 'USADA'
+                    carta_embargada.fecha_uso = timezone.now()
+                    carta_embargada.save()
+
+                    carta_tienda = carta_embargada.carta
+                    carta_tienda.stock_disponible += 1
+                    carta_tienda.save()
+
+                    embargos_totales += 1
+                    Transaccion.objects.create(
+                        personaje=p,
+                        monto=Decimal('0.00'),
+                        concepto=f"Embargo de carta: {carta_tienda.titulo}",
+                        tipo='TARJETA',
+                        explicacion_operacion="Carta retirada y devuelta a la tienda por cerrar la semana en números rojos."
+                    )
+
             p.save()
 
-        messages.success(request, f"¡Ciclo semanal ejecutado correctamente para {personajes.count()} alumnos!")
+        resumen = f"¡Ciclo semanal ejecutado para {personajes.count()} alumnos!"
+        if en_numeros_rojos > 0:
+            resumen += f" ({en_numeros_rojos} en números rojos penalizados; {embargos_totales} cartas embargadas)."
+        messages.success(request, resumen)
 
     return redirect(f"{reverse('profesor_panel')}?clase_id={clase_id}")
 
@@ -993,52 +1052,6 @@ def crear_tarjeta_personalizada(request):
 
 
 @login_required
-def crear_evento_personalizado(request):
-    es_profesor = request.user.is_staff or Clase.objects.filter(profesor=request.user).exists()
-    if not es_profesor:
-        messages.error(request, "Acceso restringido al docente.")
-        return redirect('profesor_panel')
-
-    if request.method == 'POST':
-        curso = request.POST.get('curso', '1_ESO')
-        dificultad = request.POST.get('dificultad', 'MEDIO')
-        temario = request.POST.get('temario', 'General')
-        tipo_respuesta = request.POST.get('tipo_respuesta', 'NUMERICA')
-        pregunta_matematica = request.POST.get('pregunta_matematica', '')
-        opciones_test = request.POST.get('opciones_test', '')
-        respuesta_correcta = request.POST.get('respuesta_correcta', '')
-        penalizacion_dinero = Decimal(request.POST.get('penalizacion_dinero') or '0.00')
-        penalizacion_salud = int(request.POST.get('penalizacion_salud') or 0)
-        penalizacion_felicidad = int(request.POST.get('penalizacion_felicidad') or 0)
-        porcentaje_mitigacion = int(request.POST.get('porcentaje_mitigacion') or 50)
-        imagen_adjunta = request.FILES.get('imagen')
-        if imagen_adjunta and imagen_adjunta.size > 5 * 1024 * 1024:
-            messages.error(request, "La imagen es demasiado pesada. El tamaño máximo permitido es 5 MB.")
-            return redirect(request.META.get('HTTP_REFERER') or 'banco_recursos')
-
-        
-        EventoAleatorio.objects.create(
-            creador=request.user,
-            curso=curso,
-            dificultad=dificultad,
-            temario=temario,
-            tipo_respuesta=tipo_respuesta,
-            pregunta_matematica=pregunta_matematica,
-            opciones_test=opciones_test,
-            respuesta_correcta=respuesta_correcta,
-            penalizacion_dinero=penalizacion_dinero,
-            penalizacion_salud=penalizacion_salud,
-            penalizacion_felicidad=penalizacion_felicidad,
-            porcentaje_mitigacion=porcentaje_mitigacion,
-            imagen=imagen_adjunta # <-- Guardar imagen
-        )
-        
-        messages.success(request, f"Reto del tema '{temario}' guardado correctamente.")
-
-    return redirect(request.META.get('HTTP_REFERER', 'banco_recursos'))
-
-
-@login_required
 def editar_tarjeta(request, tarjeta_id):
     es_profesor = request.user.is_staff or Clase.objects.filter(profesor=request.user).exists()
     if not es_profesor:
@@ -1064,6 +1077,52 @@ def editar_tarjeta(request, tarjeta_id):
 
 
 @login_required
+def crear_evento_personalizado(request):
+    es_profesor = request.user.is_staff or Clase.objects.filter(profesor=request.user).exists()
+    if not es_profesor:
+        messages.error(request, "Acceso restringido al docente.")
+        return redirect('profesor_panel')
+
+    if request.method == 'POST':
+        curso = request.POST.get('curso', '1_ESO')
+        dificultad = request.POST.get('dificultad', 'MEDIO')
+        temario = request.POST.get('temario', 'General')
+        tipo_respuesta = request.POST.get('tipo_respuesta', 'NUMERICA')
+        pregunta_matematica = request.POST.get('pregunta_matematica', '')
+        opciones_test = request.POST.get('opciones_test', '')
+        respuesta_correcta = request.POST.get('respuesta_correcta', '')
+        penalizacion_dinero = abs(Decimal(request.POST.get('penalizacion_dinero') or '0.00'))
+        penalizacion_salud = abs(int(request.POST.get('penalizacion_salud') or 0))
+        penalizacion_felicidad = abs(int(request.POST.get('penalizacion_felicidad') or 0))
+        porcentaje_mitigacion = int(request.POST.get('porcentaje_mitigacion') or 50)
+
+        imagen_adjunta = request.FILES.get('imagen')
+        if imagen_adjunta and imagen_adjunta.size > 5 * 1024 * 1024:
+            messages.error(request, "La imagen es demasiado pesada. El tamaño máximo permitido es 5 MB.")
+            return redirect(request.META.get('HTTP_REFERER') or 'banco_recursos')
+
+        EventoAleatorio.objects.create(
+            creador=request.user,
+            curso=curso,
+            dificultad=dificultad,
+            temario=temario,
+            tipo_respuesta=tipo_respuesta,
+            pregunta_matematica=pregunta_matematica,
+            opciones_test=opciones_test,
+            respuesta_correcta=respuesta_correcta,
+            penalizacion_dinero=penalizacion_dinero,
+            penalizacion_salud=penalizacion_salud,
+            penalizacion_felicidad=penalizacion_felicidad,
+            porcentaje_mitigacion=porcentaje_mitigacion,
+            imagen=imagen_adjunta
+        )
+
+        messages.success(request, f"Reto del tema '{temario}' guardado correctamente.")
+
+    return redirect(request.META.get('HTTP_REFERER', 'banco_recursos'))
+
+
+@login_required
 def editar_evento(request, evento_id):
     es_profesor = request.user.is_staff or Clase.objects.filter(profesor=request.user).exists()
     if not es_profesor:
@@ -1080,16 +1139,19 @@ def editar_evento(request, evento_id):
         evento.pregunta_matematica = request.POST.get('pregunta_matematica', '')
         evento.opciones_test = request.POST.get('opciones_test', '')
         evento.respuesta_correcta = request.POST.get('respuesta_correcta', '')
-        evento.penalizacion_dinero = Decimal(request.POST.get('penalizacion_dinero') or '0.00')
-        evento.penalizacion_salud = int(request.POST.get('penalizacion_salud') or 0)
-        evento.penalizacion_felicidad = int(request.POST.get('penalizacion_felicidad') or 0)
+        evento.penalizacion_dinero = abs(Decimal(request.POST.get('penalizacion_dinero') or '0.00'))
+        evento.penalizacion_salud = abs(int(request.POST.get('penalizacion_salud') or 0))
+        evento.penalizacion_felicidad = abs(int(request.POST.get('penalizacion_felicidad') or 0))
         evento.porcentaje_mitigacion = int(request.POST.get('porcentaje_mitigacion') or 50)
-        evento.imagen = request.FILES.get('imagen')
-        if evento.imagen and evento.imagen.size > 5 * 1024 * 1024:
-            messages.error(request, "La imagen es demasiado pesada. El tamaño máximo permitido es 5 MB.")
-            return redirect(request.META.get('HTTP_REFERER') or 'banco_recursos')
+
+        nueva_imagen = request.FILES.get('imagen')
+        if nueva_imagen:
+            if nueva_imagen.size > 5 * 1024 * 1024:
+                messages.error(request, "La imagen es demasiado pesada. El tamaño máximo permitido es 5 MB.")
+                return redirect(request.META.get('HTTP_REFERER') or 'banco_recursos')
+            evento.imagen = nueva_imagen
+
         evento.save()
-            
         messages.success(request, f"Reto del tema '{evento.temario}' actualizado correctamente.")
 
     return redirect('banco_recursos')
@@ -1226,8 +1288,12 @@ def comprar_carta(request, carta_id):
     """Procesa la compra de una carta por parte del alumno."""
     if request.method == 'POST':
         personaje = get_object_or_404(Personaje, usuario=request.user)
+        
         carta = get_object_or_404(CartaTienda, id=carta_id, clase=personaje.clase)
-
+        if personaje.dinero_disponible < Decimal('0.00'):
+            messages.error(request, "Cuenta bloqueada por números rojos. Salda tu deuda antes de comprar cartas.")
+            return redirect('tienda_cartas')
+        
         if carta.stock_disponible <= 0:
             messages.error(request, "¡Esta carta se ha agotado en la tienda!")
             return redirect('tienda_cartas')
@@ -1254,11 +1320,11 @@ def comprar_carta(request, carta_id):
 
         # 3. Registrar transacción contable
         Transaccion.objects.create(
-            personaje=personaje,
-            tipo='GASTO',
-            concepto=f"Compra de Carta: {carta.titulo}",
-            monto=precio_final,
-            explicacion_operacion="Adquisición de carta de recompensa en la tienda."
+          personaje=personaje,
+          tipo='GASTO',
+          concepto=f"Compra de Carta: {carta.titulo}",
+          monto=-precio_final,
+          explicacion_operacion="Adquisición de carta de recompensa en la tienda."
         )
 
         messages.success(request, f"¡Felicidades! Has comprado '{carta.titulo}' por {precio_final}€.")
@@ -1278,6 +1344,14 @@ def usar_carta_profesor(request, carta_alumno_id):
     carta_tienda = carta_alumno.carta
 
     if request.method == 'POST':
+        if carta_alumno.personaje.dinero_disponible < Decimal('0.00'):
+            nombre_alumno = carta_alumno.personaje.usuario.get_full_name() or carta_alumno.personaje.usuario.username
+            messages.error(
+                request,
+                f"Canje bloqueado: {nombre_alumno} está en números rojos ({carta_alumno.personaje.dinero_disponible}€). Debe saldar su deuda antes de usar cartas."
+            )
+            return redirect(f"{reverse('profesor_panel')}?clase_id={carta_tienda.clase.id}")
+        
         # 1. Marcar carta del alumno como USADA
         carta_alumno.estado = 'USADA'
         carta_alumno.fecha_uso = timezone.now()

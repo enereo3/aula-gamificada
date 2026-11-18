@@ -28,8 +28,11 @@ SECRET_KEY = 'django-insecure-jsirxtogzpcr(4r0&56d(s9mr$pm+g7s6^+x7!%5mbvuga=n#g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('RENDER_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = ['.run.app', 'localhost', '127.0.0.1']
+# Confiar en las peticiones POST enviadas desde HTTPS en Cloud Run
+CSRF_TRUSTED_ORIGINS = ['https://*.run.app']
+# Indicar a Django que Cloud Run gestiona el certificado SSL/HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
