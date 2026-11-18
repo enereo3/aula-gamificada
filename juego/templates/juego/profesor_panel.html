@@ -25,13 +25,13 @@
                 <select class="form-select form-select-sm fw-bold border-primary" style="min-width: 200px;" onchange="location = this.value;">
                     {% for c in clases %}
                         <option value="?clase_id={{ c.id }}" {% if clase_seleccionada and clase_seleccionada.id == c.id %}selected{% endif %}>
-                            {{ c.nombre }} ({{ c.personaje_set.count }} alumnos)
+                            {{ c.nombre }} ({{ c.alumnos.count }} alumnos)
                         </option>
                     {% empty %}
                         <option value="">No tienes clases creadas</option>
                     {% endfor %}
                 </select>
-                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCrearClase">
+                <button class="btn btn-sm btn-light text-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearClase">
                     <i class="bi bi-plus-circle me-1"></i> Nueva Clase
                 </button>
             </div>
@@ -111,6 +111,12 @@
                                             <i class="bi bi-hourglass-split"></i> {{ p.num_retos_sin_hacer }}
                                         </span>
                                     {% endif %}
+                                    {% if p.dinero_disponible < 0 %}
+                                        <span class="badge rounded-pill bg-danger ms-1"
+                                            title="En números rojos ({{ p.dinero_disponible }}€): cartas bloqueadas y sujeto a embargo semanal">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Números rojos
+                                        </span>
+                                    {% endif %}
                                 </td>
                                 <td><span class="badge bg-info text-dark">{{ p.clase.nombre|default:"Sin Clase" }}</span></td>
                                 
@@ -181,18 +187,18 @@
             <ul class="nav nav-tabs mb-4" id="docenteTabs" role="tablist">
                 
                 <li class="nav-item">
-                    <button class="nav-link active fw-bold" id="lanzar-tab" data-bs-toggle="tab" data-bs-target="#lanzar-pane" type="button" role="tab">
-                        <i class="bi bi-send me-1"></i> Entregar Tarjeta / Reto
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link fw-bold  text-danger" id="revisiones-tab" data-bs-toggle="tab" data-bs-target="#revisiones-pane" type="button" role="tab">
+                    <button class="nav-link active fw-bold  text-danger" id="revisiones-tab" data-bs-toggle="tab" data-bs-target="#revisiones-pane" type="button" role="tab">
                         <i class="bi bi-inbox me-1"></i> Revisiones Pendientes
                         {% with total_pendientes=revisiones_pendientes.count|add:eventos_pendientes_revision.count %}
                             {% if total_pendientes > 0 %}
                                 <span class="badge bg-danger rounded-pill">{{ total_pendientes }}</span>
                             {% endif %}
                         {% endwith %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" id="lanzar-tab" data-bs-toggle="tab" data-bs-target="#lanzar-pane" type="button" role="tab">
+                        <i class="bi bi-send me-1"></i> Entregar Tarjeta / Reto
                     </button>
                 </li>
                 <li class="nav-item">
@@ -215,7 +221,7 @@
             <div class="tab-content" id="docenteTabsContent">
                 
                 <!-- PESTAÑA: ENTREGAR MATERIAL CON FILTROS DE CLASE -->
-                <div class="tab-pane fade show active" id="lanzar-pane" role="tabpanel">
+                <div class="tab-pane fade " id="lanzar-pane" role="tabpanel">
                     
                     <!-- BARRA DE FILTRADO RÁPIDO -->
                     <form method="GET" action="{% url 'profesor_panel' %}" class="row g-2 mb-4 p-3 bg-light rounded border align-items-center">
@@ -324,7 +330,7 @@
                 </div>
 
                 <!-- PESTAÑA: IMPUGNACIONES Y SOLICITUDES DE ALUMNOS --> 
-                <div class="tab-pane fade" id="revisiones-pane" role="tabpanel">
+                <div class="tab-pane fade show active"  id="revisiones-pane" role="tabpanel">
                     <div class="p-3 border rounded bg-light">
                         <h6 class="fw-bold mb-3"><i class="bi bi-shield-exclamation text-warning me-2"></i> Impugnaciones y Solicitudes de Alumnos</h6>
                         <div class="table-responsive">
@@ -344,7 +350,7 @@
                                             <td class="fw-bold">{{ rev.personaje.usuario.get_full_name }}</td>
                                             <td class="small">{{ rev.evento.pregunta_matematica }}</td>
                                             <td class="small">
-                                                <div class="text-danger">Enviada: <strong>{{ rev.respuesta_enviada }}</strong></div>
+                                                <div class="text-danger">Enviada: <strong>{{ rev.respuesta_alumno }}</strong></div>
                                                 <div class="text-success">Esperada: <strong>{{ rev.evento.respuesta_correcta }}</strong></div>
                                             </td>
                                             <td class="small text-muted"><em>"{{ rev.motivo_impugnacion }}"</em></td>
@@ -603,6 +609,30 @@
         </div>
     </div>
     {% endif %}
+    <!-- MODAL: CREAR CLASE -->
+    <div class="modal fade" id="modalCrearClase" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'crear_clase' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="clase_id" value="{{ clase_seleccionada.id }}">
+                    <div class="modal-header bg-primary text-white">
+                        <h6 class="modal-title fw-bold">Crear Nueva Clase / Grupo</h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label small fw-bold">Nombre de la clase:</label>
+                        <input type="text" name="nombre_clase" class="form-control form-control-sm" placeholder="Ej: 2º ESO B" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-sm btn-primary fw-bold">Crear Clase</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {

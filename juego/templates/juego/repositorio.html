@@ -69,7 +69,7 @@
                 </div>
                 <div class="col-12 col-md-4">
                     <label class="form-label small fw-bold text-muted">Búsqueda por palabra / tema:</label>
-                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Ej: Porcentajes, Regla de 3..." value="{{ request.GET.q }}">
+                    <input type="text" name="temario" class="form-control form-control-sm" placeholder="Ej: Porcentajes, Regla de 3..." value="{{ request.GET.temario }}">
                 </div>
                 <div class="col-12 col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold"><i class="bi bi-search me-1"></i> Buscar</button>
@@ -137,9 +137,7 @@
 
                                     <div class="d-flex justify-content-between align-items-center small text-muted border-top pt-2">
                                         <div>
-                                            <span class="text-danger fw-bold me-1">-{{ e.penalizacion_dinero }}€</span>
-                                            <span class="text-danger fw-bold me-1">-{{ e.penalizacion_salud }}S</span>
-                                            <span class="text-danger fw-bold">-{{ e.penalizacion_felicidad }}F</span>
+                                            <span class="badge bg-danger">-{{ e.penalizacion_dinero }} € | -{{ e.penalizacion_salud }} Salud | -{{ e.penalizacion_felicidad }} Fel.</span>
                                         </div>
                                         <div class="d-flex gap-1">
                                             <button class="btn btn-sm btn-outline-primary border-0" 
@@ -246,22 +244,22 @@
                                                 <label class="form-label micro fw-bold">Respuesta Correcta:</label>
                                                 <input type="text" name="respuesta_correcta" class="form-control form-control-sm" value="{{ e.respuesta_correcta|default:'' }}">
                                             </div>
-                                            <div class="row g-2">
+                                            <div class="row g-2 mb-3">
                                                 <div class="col-3">
-                                                    <label class="form-label micro fw-bold">Multa €:</label>
-                                                    <input type="number" step="0.01" name="penalizacion_dinero" class="form-control form-control-sm" value="{{ e.penalizacion_dinero|stringformat:'.2f' }}">
+                                                    <label class="form-label micro fw-bold text-danger">Multa €:</label>
+                                                    <input type="number" step="0.01" min="0" name="penalizacion_dinero" value="20.00" class="form-control form-control-sm">
                                                 </div>
                                                 <div class="col-3">
-                                                    <label class="form-label micro fw-bold">Salud -:</label>
-                                                    <input type="number" name="penalizacion_salud" class="form-control form-control-sm" value="{{ e.penalizacion_salud }}">
+                                                    <label class="form-label micro fw-bold text-danger">Salud -:</label>
+                                                    <input type="number" min="0" name="penalizacion_salud" value="5" class="form-control form-control-sm">
                                                 </div>
                                                 <div class="col-3">
-                                                    <label class="form-label micro fw-bold">Fel. -:</label>
-                                                    <input type="number" name="penalizacion_felicidad" class="form-control form-control-sm" value="{{ e.penalizacion_felicidad }}">
+                                                    <label class="form-label micro fw-bold text-danger">Fel. -:</label>
+                                                    <input type="number" min="0" name="penalizacion_felicidad" value="5" class="form-control form-control-sm">
                                                 </div>
                                                 <div class="col-3">
-                                                    <label class="form-label micro fw-bold">% Mitig.:</label>
-                                                    <input type="number" name="porcentaje_mitigacion" class="form-control form-control-sm" value="{{ e.porcentaje_mitigacion }}">
+                                                    <label class="form-label micro fw-bold text-primary">% Mitig.:</label>
+                                                    <input type="number" min="0" max="100" name="porcentaje_mitigacion" value="50" class="form-control form-control-sm">
                                                 </div>
                                             </div>
                                         </div>
@@ -467,23 +465,23 @@
                                     
                                     <!-- Botones de inserción rápida para el profesor -->
                                     <div class="btn-group btn-group-sm mb-2 w-100 d-flex flex-wrap gap-1" role="group">
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\frac{a}{b}')">½ Fracción</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', 'x^2')">x² Potencia</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\sqrt{x}')">√ Raíz</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\pi')">π Pi</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\le')">≤ Menor o igual</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input_{{ e.id }}', 'vista_previa_math_{{ e.id }}', '\\ge')">≥ Mayor o igual</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input__nuevo', 'vista_previa_math__nuevo', '\\frac{a}{b}')">½ Fracción</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input__nuevo', 'vista_previa_math__nuevo', 'x^2')">x² Potencia</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input__nuevo', 'vista_previa_math__nuevo', '\\sqrt{x}')">√ Raíz</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input__nuevo', 'vista_previa_math__nuevo', '\\pi')">π Pi</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input__nuevo', 'vista_previa_math__nuevo', '\\le')">≤ Menor o igual</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="insertarSimbolo('pregunta_input__nuevo', 'vista_previa_math__nuevo', '\\ge')">≥ Mayor o igual</button>
                                     </div>
 
                                     <!-- Campo de texto -->
-                                    <textarea id="pregunta_input_{{ e.id }}" name="pregunta_matematica" class="form-control form-control-sm" 
+                                    <textarea id="pregunta_input__nuevo" name="pregunta_matematica" class="form-control form-control-sm" 
                                         rows="3" placeholder="Ej: Calcula la hipotenusa de un triángulo con a=3 y b=4 usando $c = \sqrt{a^2 + b^2}$" 
-                                        oninput="actualizarVistaPrevia('vista_previa_math_{{ e.id }}','pregunta_input_{{ e.id }}')"required></textarea> 
+                                        oninput="actualizarVistaPrevia('vista_previa_math__nuevo','pregunta_input__nuevo')"required></textarea> 
                                     
                                     <!-- Caja de Vista Previa -->
                                     <div class="mt-2 p-2 bg-white rounded border">
                                         <small class="text-muted d-block fw-bold micro">Vista previa para el alumno:</small>
-                                        <div id="vista_previa_math_{{ e.id }}" class="fs-6 text-primary fw-bold mt-1">Escribe una fórmula para ver el resultado...</div>
+                                        <div id="vista_previa_math__nuevo" class="fs-6 text-primary fw-bold mt-1">Escribe una fórmula para ver el resultado...</div>
                                     </div>
                                 </div>
                                 <div class="mb-2">
@@ -496,12 +494,24 @@
                                 <div class="mb-2">
                                     <input type="text" name="respuesta_correcta" class="form-control form-control-sm" placeholder="Respuesta Correcta (Ej: 30)">
                                 </div>
-                                <div class="row g-2 mb-3">
-                                    <div class="col-3"><input type="number" step="0.01" name="penalizacion_dinero" class="form-control form-control-sm" placeholder="Multa €"></div>
-                                    <div class="col-3"><input type="number" name="penalizacion_salud" class="form-control form-control-sm" placeholder="Salud -"></div>
-                                    <div class="col-3"><input type="number" name="penalizacion_felicidad" class="form-control form-control-sm" placeholder="Fel. -"></div>
-                                    <div class="col-3"><input type="number" name="porcentaje_mitigacion" class="form-control form-control-sm" value="50" placeholder="% Mitig."></div>
+                            <div class="row g-2">
+                                <div class="col-3">
+                                    <label class="form-label micro fw-bold">Multa €:</label>
+                                    <input type="number" step="0.01" min="0" name="penalizacion_dinero" class="form-control form-control-sm" value="{{ e.penalizacion_dinero|stringformat:'.2f' }}">
                                 </div>
+                                <div class="col-3">
+                                    <label class="form-label micro fw-bold">Salud -:</label>
+                                    <input type="number" min="0" name="penalizacion_salud" class="form-control form-control-sm" value="{{ e.penalizacion_salud }}">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label micro fw-bold">Fel. -:</label>
+                                    <input type="number" min="0" name="penalizacion_felicidad" class="form-control form-control-sm" value="{{ e.penalizacion_felicidad }}">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label micro fw-bold">% Mitig.:</label>
+                                    <input type="number" min="0" max="100" name="porcentaje_mitigacion" class="form-control form-control-sm" value="{{ e.porcentaje_mitigacion }}">
+                                </div>
+                            </div>
                                 <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold">Guardar Actividad</button>
                             </form>
                         </div>
@@ -560,27 +570,26 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function insertarSimbolo(inputId, ElementId, simbolo) {
+        function insertarSimbolo(inputId, previewId, simbolo) {
             const input = document.getElementById(inputId);
+            if (!input) return;
             const start = input.selectionStart;
             const end = input.selectionEnd;
             const text = input.value;
-            const element= ElementId
             
             // Insertar el símbolo rodeado de $ para KaTeX
             const codigo = `$${simbolo}$`;
             input.value = text.substring(0, start) + codigo + text.substring(end);
             input.focus();
             input.setSelectionRange(start + codigo.length, start + codigo.length);
-            actualizarVistaPrevia(element, input.value);
+            actualizarVistaPrevia(previewId, inputId);
         }
 
         function actualizarVistaPrevia(previewId, inputId) {
             const input = document.getElementById(inputId);
             const preview = document.getElementById(previewId);
-            if (!preview) return;
+            if (!input || !preview) return;
 
-            // Usar directamente la variable 'texto' que viene de this.value
             preview.innerHTML = input.value || "Escribe una fórmula para ver el resultado...";
 
             if (window.renderMathInElement) {
@@ -612,5 +621,6 @@
             }
         });
     </script>
+    
 </body>
 </html>
