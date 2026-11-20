@@ -1,5 +1,6 @@
 import random
-from decimal import Decimal
+import openpyxl
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,10 +10,25 @@ from django.db.models import Q, Count
 from django.core.paginator import Paginator
 from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+from openpyxl.styles import Font, PatternFill
+from openpyxl.worksheet.datavalidation import DataValidation
+from django.http import HttpResponse
+from .forms import (
+    EditarPerfilForm,
+    EditarAvatarForm,
+    PerfilPasswordForm,
+    ProfesorEditarAlumnoForm,
+    ProfesorEditarPersonajeForm,
+    ProfesorResetPasswordForm,
+)
 from .models import (
     Personaje, Tarjeta, TarjetaAlumno, EventoAleatorio, EventoAlumno, 
     Transaccion, Clase, AVATAR_CHOICES, CONFIG_PRESUPUESTO, TASA_INTERES_FONDO, SituacionNarrativa, CartaTienda, CartaAlumno
 )
+
+
 
 
 # ==========================================
@@ -971,6 +987,98 @@ def resolver_impugnacion(request, evento_alumno_id):
     return redirect('profesor_panel')
 
 
+@login_required
+def lanzar_evento_aleatorio_clase(request):
+    if not _es_profesor(request.user):
+        messages.error(request, 'No tienes permisos para realizar esta acción.')
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        clase_id = request.POST.get('clase_id')
+        personaje_id = request.POST.get('personaje_id', 'TODOS')
+        curso = request.POST.get('curso', '').strip()
+        dificultad = request.POST.get('dificultad', '').strip()
+        temario = request.POST.get('temario', '').strip()
+
+        if not clase_id:
+            messages.error(request, 'Debes seleccionar una clase activa primero.')
+            return redirect('profesor_panel')
+
+        if request.user.is_superuser:
+            clase = get_object_or_404(Clase, id=clase_id)
+        else:
+            clase = get_object_or_404(Clase, id=clase_id, profesor=request.user)
+
+        # Exigir al menos un filtro para evitar mezclar cursos por accidente
+        if not (curso or dificultad or temario):
+            messages.warning(
+                request,
+                'Selecciona al menos un filtro (Curso, Dificultad o Temario) antes de repartir retos aleatorios.'
+            )
+            return redirect(f"/profesor/?clase_id={clase.id}&tab=lanzar")
+
+        # Buscar retos que coincidan con el filtro
+        eventos_qs = EventoAleatorio.objects.filter(
+            Q(creador=request.user) | Q(es_publico=True)
+        ).distinct()
+
+        if curso:
+            eventos_qs = eventos_qs.filter(curso=curso)
+        if dificultad:
+            eventos_qs = eventos_qs.filter(dificultad=dificultad)
+        if temario:
+            eventos_qs = eventos_qs.filter(temario__icontains=temario)
+
+        retos_disponibles = list(eventos_qs)
+        if not retos_disponibles:
+            messages.error(request, 'No hay retos en el banco que coincidan con los filtros seleccionados.')
+            return redirect(f"/profesor/?clase_id={clase.id}&tab=lanzar")
+
+        # Obtener destinatarios
+        if personaje_id == 'TODOS':
+            alumnos = list(Personaje.objects.filter(clase=clase))
+        else:
+            alumnos = list(Personaje.objects.filter(id=personaje_id, clase=clase))
+
+        if not alumnos:
+            messages.warning(request, 'No hay alumnos destinatarios en esta clase.')
+            return redirect(f"/profesor/?clase_id={clase.id}&tab=lanzar")
+
+        situaciones = list(SituacionNarrativa.objects.all())
+        bolsa = []
+
+        for alumno in alumnos:
+            # Si la bolsa se vacía, se vuelve a llenar y barajar para maximizar variedad
+            if not bolsa:
+                bolsa = retos_disponibles.copy()
+                random.shuffle(bolsa)
+
+            evento_elegido = bolsa.pop()
+
+            if situaciones:
+                sit = random.choice(situaciones)
+                titulo_narr = sit.titulo
+                desc_narr = sit.descripcion
+            else:
+                titulo_narr = evento_elegido.titulo or f"Reto: {evento_elegido.temario}"
+                desc_narr = evento_elegido.descripcion or ""
+
+            EventoAlumno.objects.create(
+                personaje=alumno,
+                evento=evento_elegido,
+                titulo_narrativo=titulo_narr,
+                descripcion_narrativa=desc_narr,
+            )
+
+        messages.success(
+            request,
+            f'Reparto completado: se han enviado retos aleatorios a {len(alumnos)} alumno(s) '
+            f'mezclando entre {len(retos_disponibles)} ejercicio(s) distintos del filtro.'
+        )
+        return redirect(f"/profesor/?clase_id={clase.id}&tab=lanzar")
+
+    return redirect('profesor_panel')
+
 
 # ==========================================
 # 3. REPOSITORIO Y BANCO DE RECURSOS
@@ -1447,3 +1555,405 @@ def eliminar_carta(request, carta_id):
     messages.warning(request, "Carta eliminada del catálogo.")
     return redirect(f"{reverse('tienda_cartas')}?clase_id={clase_id}")
 
+
+# ==========================================
+# 5. PERFIL DE USUARIO Y CONFIGURACIÓN
+# ==========================================
+
+def _es_profesor(user):
+    return user.is_staff or user.clases_creadas.exists()
+
+@login_required
+def perfil_usuario(request):
+    personaje = getattr(request.user, 'personaje', None)
+    perfil_form = EditarPerfilForm(instance=request.user)
+    avatar_form = EditarAvatarForm(instance=personaje) if personaje else None
+    password_form = PerfilPasswordForm(user=request.user)
+
+    if request.method == 'POST':
+        if 'guardar_datos' in request.POST:
+            perfil_form = EditarPerfilForm(request.POST, instance=request.user)
+            avatar_valido = True
+            if personaje:
+                avatar_form = EditarAvatarForm(request.POST, instance=personaje)
+                avatar_valido = avatar_form.is_valid()
+
+            if perfil_form.is_valid() and avatar_valido:
+                perfil_form.save()
+                if personaje and avatar_form:
+                    avatar_form.save()
+                messages.success(request, 'Tus datos se han actualizado correctamente.')
+                return redirect('perfil')
+
+        elif 'cambiar_password' in request.POST:
+            password_form = PerfilPasswordForm(user=request.user, data=request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Tu contraseña se ha actualizado correctamente.')
+                return redirect('perfil')
+
+    return render(request, 'juego/perfil.html', {
+        'personaje': personaje,
+        'perfil_form': perfil_form,
+        'avatar_form': avatar_form,
+        'password_form': password_form,
+        'es_profesor': _es_profesor(request.user),
+    })
+
+
+@login_required
+def gestion_alumnos(request):
+    if not _es_profesor(request.user):
+        messages.error(request, 'No tienes permisos para acceder a la gestión de alumnos.')
+        return redirect('dashboard')
+
+    if request.user.is_superuser:
+        alumnos = Personaje.objects.select_related('usuario', 'clase').all()
+    else:
+        alumnos = Personaje.objects.select_related('usuario', 'clase').filter(
+            clase__profesor=request.user
+        )
+
+    busqueda = request.GET.get('q', '').strip()
+    if busqueda:
+        alumnos = alumnos.filter(
+            Q(usuario__username__icontains=busqueda)
+            | Q(usuario__first_name__icontains=busqueda)
+            | Q(usuario__last_name__icontains=busqueda)
+            | Q(clase__nombre__icontains=busqueda)
+        )
+
+    alumnos = alumnos.order_by('clase__nombre', 'usuario__last_name', 'usuario__first_name')
+
+    return render(request, 'juego/gestion_alumnos.html', {
+        'alumnos': alumnos,
+        'busqueda': busqueda,
+    })
+
+
+@login_required
+def editar_alumno(request, personaje_id):
+    if not _es_profesor(request.user):
+        messages.error(request, 'No tienes permisos para editar alumnos.')
+        return redirect('dashboard')
+
+    if request.user.is_superuser:
+        personaje = get_object_or_404(Personaje, id=personaje_id)
+    else:
+        personaje = get_object_or_404(
+            Personaje, id=personaje_id, clase__profesor=request.user
+        )
+
+    alumno_user = personaje.usuario
+    user_form = ProfesorEditarAlumnoForm(instance=alumno_user)
+    personaje_form = ProfesorEditarPersonajeForm(instance=personaje, profesor=request.user)
+    password_form = ProfesorResetPasswordForm(user=alumno_user)
+
+    if request.method == 'POST':
+        if 'guardar_alumno' in request.POST:
+            user_form = ProfesorEditarAlumnoForm(request.POST, instance=alumno_user)
+            personaje_form = ProfesorEditarPersonajeForm(
+                request.POST, instance=personaje, profesor=request.user
+            )
+            if user_form.is_valid() and personaje_form.is_valid():
+                user_form.save()
+                personaje_form.save()
+                messages.success(
+                    request,
+                    f'Datos de {alumno_user.get_full_name() or alumno_user.username} actualizados.',
+                )
+                return redirect('editar_alumno', personaje_id=personaje.id)
+
+        elif 'reset_password' in request.POST:
+            password_form = ProfesorResetPasswordForm(user=alumno_user, data=request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                messages.success(
+                    request,
+                    f'Contraseña cambiada correctamente para {alumno_user.username}.',
+                )
+                return redirect('editar_alumno', personaje_id=personaje.id)
+
+    return render(request, 'juego/editar_alumno.html', {
+        'personaje': personaje,
+        'alumno_user': alumno_user,
+        'user_form': user_form,
+        'personaje_form': personaje_form,
+        'password_form': password_form,
+    })
+
+
+
+# ==========================================
+# 6. EXPORTACIÓN E IMPORTACIÓN DE RECURSOS
+# ==========================================
+
+@login_required
+def exportar_banco_excel(request):
+    if not _es_profesor(request.user):
+        messages.error(request, 'No tienes permisos para exportar recursos.')
+        return redirect('dashboard')
+
+    wb = openpyxl.Workbook()
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+
+    # --- PESTAÑA 1: RETOS Y ACTIVIDADES ---
+    ws_retos = wb.active
+    ws_retos.title = "Retos"
+    columnas_retos = [
+        "curso", "dificultad", "temario", "tipo_respuesta",
+        "pregunta_matematica", "opciones_test", "respuesta_correcta",
+        "penalizacion_dinero", "penalizacion_salud", "penalizacion_felicidad",
+        "porcentaje_mitigacion"
+    ]
+    ws_retos.append(columnas_retos)
+    for cell in ws_retos[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+
+    eventos = EventoAleatorio.objects.filter(
+        Q(creador=request.user) | Q(es_publico=True)
+    ).distinct().order_by('curso', 'temario')
+
+    if eventos.exists():
+        for e in eventos:
+            ws_retos.append([
+                e.curso,
+                e.dificultad,
+                e.temario,
+                e.tipo_respuesta,
+                e.pregunta_matematica,
+                e.opciones_test or "",
+                e.respuesta_correcta or "",
+                float(e.penalizacion_dinero),
+                e.penalizacion_salud,
+                e.penalizacion_felicidad,
+                e.porcentaje_mitigacion,
+            ])
+    else:
+        # Fila de ejemplo si el banco está vacío para que sirva de plantilla
+        ws_retos.append([
+            "1_ESO", "FACIL", "Porcentajes", "NUMERICA",
+            "Calcula el 20% de 150 euros", "", "30",
+            20.00, 5, 5, 50
+        ])
+
+    # --- PESTAÑA 2: TARJETAS DE RECOMPENSA ---
+    ws_tarjetas = wb.create_sheet(title="Tarjetas")
+    columnas_tarjetas = [
+        "curso", "dificultad", "temario", "tipo",
+        "nombre", "descripcion",
+        "efecto_dinero", "efecto_salud", "efecto_felicidad"
+    ]
+    ws_tarjetas.append(columnas_tarjetas)
+    for cell in ws_tarjetas[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+
+    tarjetas = Tarjeta.objects.filter(
+        Q(creador=request.user) | Q(es_publica=True)
+    ).distinct().order_by('curso', 'temario')
+
+    if tarjetas.exists():
+        for t in tarjetas:
+            ws_tarjetas.append([
+                t.curso,
+                t.dificultad,
+                t.temario,
+                t.tipo,
+                t.nombre,
+                t.descripcion,
+                float(t.efecto_dinero),
+                t.efecto_salud,
+                t.efecto_felicidad,
+            ])
+    else:
+        ws_tarjetas.append([
+            "1_ESO", "MEDIO", "Ahorro", "TRABAJO",
+            "Bono al Esfuerzo", "Recompensa por completar los ejercicios de clase.",
+            25.00, 5, 5
+        ])
+
+    # Desplegables para la pestaña Retos (filas 2 a 500)
+    dv_curso_r = DataValidation(type="list", formula1='"1_ESO,2_ESO,3_ESO,4_ESO,BACH,GENERAL"', allow_blank=True)
+    dv_dif_r = DataValidation(type="list", formula1='"FACIL,MEDIO,DIFICIL"', allow_blank=True)
+    dv_resp_r = DataValidation(type="list", formula1='"NUMERICA,TEST,TEXTO"', allow_blank=True)
+    ws_retos.add_data_validation(dv_curso_r)
+    ws_retos.add_data_validation(dv_dif_r)
+    ws_retos.add_data_validation(dv_resp_r)
+    dv_curso_r.add("A2:A500")
+    dv_dif_r.add("B2:B500")
+    dv_resp_r.add("D2:D500")
+
+    # Desplegables para la pestaña Tarjetas (filas 2 a 500)
+    dv_curso_t = DataValidation(type="list", formula1='"1_ESO,2_ESO,3_ESO,4_ESO,BACH,GENERAL"', allow_blank=True)
+    dv_dif_t = DataValidation(type="list", formula1='"FACIL,MEDIO,DIFICIL"', allow_blank=True)
+    dv_tipo_t = DataValidation(type="list", formula1='"TRABAJO,EXCELENCIA,PARTICIPACION,AHORRO,SEGURO,BONO,BECA,COMODIN"', allow_blank=True)
+    ws_tarjetas.add_data_validation(dv_curso_t)
+    ws_tarjetas.add_data_validation(dv_dif_t)
+    ws_tarjetas.add_data_validation(dv_tipo_t)
+    dv_curso_t.add("A2:A500")
+    dv_dif_t.add("B2:B500")
+    dv_tipo_t.add("D2:D500")
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="banco_recursos_aula.xlsx"'
+    wb.save(response)
+    return response
+
+
+@login_required
+def importar_banco_excel(request):
+    if not _es_profesor(request.user):
+        messages.error(request, 'No tienes permisos para importar recursos.')
+        return redirect('dashboard')
+
+    if request.method == 'POST' and request.FILES.get('archivo_excel'):
+        archivo = request.FILES['archivo_excel']
+        if not archivo.name.endswith('.xlsx'):
+            messages.error(request, 'Por favor, sube un archivo Excel válido (.xlsx).')
+            return redirect('banco_recursos')
+
+        # Mapas flexibles para aceptar tanto código interno como texto legible
+        mapa_curso = {
+            '1_ESO': '1_ESO', '1º ESO': '1_ESO', '1 ESO': '1_ESO',
+            '2_ESO': '2_ESO', '2º ESO': '2_ESO', '2 ESO': '2_ESO',
+            '3_ESO': '3_ESO', '3º ESO': '3_ESO', '3 ESO': '3_ESO',
+            '4_ESO': '4_ESO', '4º ESO': '4_ESO', '4 ESO': '4_ESO',
+            'BACH': 'BACH', 'BACHILLERATO': 'BACH',
+            'GENERAL': 'GENERAL',
+        }
+        mapa_dificultad = {
+            'FACIL': 'FACIL', 'FÁCIL': 'FACIL',
+            'MEDIO': 'MEDIO', 'MEDIA': 'MEDIO',
+            'DIFICIL': 'DIFICIL', 'DIFÍCIL': 'DIFICIL',
+        }
+        mapa_respuesta = {
+            'NUMERICA': 'NUMERICA', 'NUMÉRICA': 'NUMERICA',
+            'TEST': 'TEST', 'OPCION MULTIPLE': 'TEST',
+            'TEXTO': 'TEXTO', 'ABIERTA': 'TEXTO',
+        }
+        tipos_tarjeta_validos = {
+            'TRABAJO', 'EXCELENCIA', 'PARTICIPACION', 'AHORRO',
+            'SEGURO', 'BONO', 'BECA', 'COMODIN'
+        }
+
+        try:
+            wb = openpyxl.load_workbook(archivo, data_only=True)
+        except Exception:
+            messages.error(request, 'No se pudo leer el archivo Excel. Comprueba que no esté dañado.')
+            return redirect('banco_recursos')
+
+        retos_creados = 0
+        tarjetas_creadas = 0
+        omitidos = 0
+
+        # 1. Procesar pestaña "Retos"
+        if "Retos" in wb.sheetnames:
+            ws_retos = wb["Retos"]
+            for fila in ws_retos.iter_rows(min_row=2, values_only=True):
+                if not fila or not any(fila):
+                    continue
+                # Rellenar columnas faltantes con None hasta 11
+                datos = list(fila) + [None] * (11 - len(fila))
+                curso_raw, dif_raw, temario, tipo_resp_raw, pregunta, opciones, resp_corr, multa, sal, fel, mitig = datos[:11]
+
+                if not pregunta or not str(pregunta).strip():
+                    continue
+
+                curso = mapa_curso.get(str(curso_raw or '1_ESO').strip().upper(), '1_ESO')
+                dificultad = mapa_dificultad.get(str(dif_raw or 'MEDIO').strip().upper(), 'MEDIO')
+                tipo_respuesta = mapa_respuesta.get(str(tipo_resp_raw or 'NUMERICA').strip().upper(), 'NUMERICA')
+                temario_limpio = str(temario or 'General').strip()
+                pregunta_limpia = str(pregunta).strip()
+
+                # Evitar duplicados exactos del mismo profesor
+                if EventoAleatorio.objects.filter(
+                    creador=request.user,
+                    curso=curso,
+                    temario=temario_limpio,
+                    pregunta_matematica=pregunta_limpia
+                ).exists():
+                    omitidos += 1
+                    continue
+
+                try:
+                    penalizacion_dinero = Decimal(str(multa if multa is not None else '20.00'))
+                except InvalidOperation:
+                    penalizacion_dinero = Decimal('20.00')
+
+                EventoAleatorio.objects.create(
+                    creador=request.user,
+                    es_publico=True,
+                    curso=curso,
+                    dificultad=dificultad,
+                    temario=temario_limpio,
+                    tipo_respuesta=tipo_respuesta,
+                    pregunta_matematica=pregunta_limpia,
+                    opciones_test=str(opciones).strip() if opciones else "",
+                    respuesta_correcta=str(resp_corr).strip() if resp_corr is not None else "",
+                    penalizacion_dinero=penalizacion_dinero,
+                    penalizacion_salud=int(sal or 0),
+                    penalizacion_felicidad=int(fel or 0),
+                    porcentaje_mitigacion=int(mitig if mitig is not None else 50),
+                )
+                retos_creados += 1
+
+        # 2. Procesar pestaña "Tarjetas"
+        if "Tarjetas" in wb.sheetnames:
+            ws_tarjetas = wb["Tarjetas"]
+            for fila in ws_tarjetas.iter_rows(min_row=2, values_only=True):
+                if not fila or not any(fila):
+                    continue
+                datos = list(fila) + [None] * (9 - len(fila))
+                curso_raw, dif_raw, temario, tipo_raw, nombre, descripcion, dinero, sal, fel = datos[:9]
+
+                if not nombre or not str(nombre).strip():
+                    continue
+
+                curso = mapa_curso.get(str(curso_raw or '1_ESO').strip().upper(), '1_ESO')
+                dificultad = mapa_dificultad.get(str(dif_raw or 'MEDIO').strip().upper(), 'MEDIO')
+                tipo = str(tipo_raw or 'TRABAJO').strip().upper()
+                if tipo not in tipos_tarjeta_validos:
+                    tipo = 'TRABAJO'
+
+                temario_limpio = str(temario or 'General').strip()
+                nombre_limpio = str(nombre).strip()
+
+                if Tarjeta.objects.filter(
+                    creador=request.user,
+                    curso=curso,
+                    nombre=nombre_limpio
+                ).exists():
+                    omitidos += 1
+                    continue
+
+                try:
+                    efecto_dinero = Decimal(str(dinero if dinero is not None else '0.00'))
+                except InvalidOperation:
+                    efecto_dinero = Decimal('0.00')
+
+                Tarjeta.objects.create(
+                    creador=request.user,
+                    es_publica=True,
+                    curso=curso,
+                    dificultad=dificultad,
+                    temario=temario_limpio,
+                    tipo=tipo,
+                    nombre=nombre_limpio,
+                    descripcion=str(descripcion or '').strip(),
+                    efecto_dinero=efecto_dinero,
+                    efecto_salud=int(sal or 0),
+                    efecto_felicidad=int(fel or 0),
+                )
+                tarjetas_creadas += 1
+
+        msg = f'Importación completada: {retos_creados} retos y {tarjetas_creadas} tarjetas añadidas.'
+        if omitidos:
+            msg += f' ({omitidos} duplicados omitidos).'
+        messages.success(request, msg)
+
+    return redirect('banco_recursos')

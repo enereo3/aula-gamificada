@@ -30,6 +30,7 @@ urlpatterns = [
     path('clase/agregar-alumno/', views.agregar_alumno_a_clase, name='agregar_alumno_a_clase'),
     path('clase/quitar-alumno/<int:personaje_id>/', views.quitar_alumno_de_clase, name='quitar_alumno_de_clase'),
     path('evaluar-evento/<int:evento_alumno_id>/', views.evaluar_evento_abierto, name='evaluar_evento_abierto'),
+    path('profesor/lanzar-evento-aleatorio/', views.lanzar_evento_aleatorio_clase, name='lanzar_evento_aleatorio_clase'),
 
     # --- BANCO DE RECURSOS Y CREACIÓN DE MATERIALES ---
     path('profesor/repositorio/', views.banco_recursos, name='banco_recursos'),
@@ -39,6 +40,8 @@ urlpatterns = [
     path('profesor/evento/<int:evento_id>/editar/', views.editar_evento, name='editar_evento'),
     path('profesor/tarjeta/<int:tarjeta_id>/eliminar/', views.eliminar_tarjeta, name='eliminar_tarjeta'),
     path('profesor/evento/<int:evento_id>/eliminar/', views.eliminar_evento, name='eliminar_evento'),
+    path('profesor/banco/exportar/', views.exportar_banco_excel, name='exportar_banco_excel'),
+    path('profesor/banco/importar/', views.importar_banco_excel, name='importar_banco_excel'),
 
  # --- CARTAS Y TIENDA  ---
     path('tienda/', views.tienda_cartas, name='tienda_cartas'),
@@ -48,6 +51,11 @@ urlpatterns = [
     path('tienda/crear/', views.crear_carta, name='crear_carta'),
     path('tienda/editar/<int:carta_id>/', views.editar_carta, name='editar_carta'),
     path('tienda/eliminar/<int:carta_id>/', views.eliminar_carta, name='eliminar_carta'),
+
+# --- PERFIL DE USUARIO Y CONFIGURACIÓN ---
+    path('perfil/', views.perfil_usuario, name='perfil'),
+    path('profesor/alumnos/', views.gestion_alumnos, name='gestion_alumnos'),
+    path('profesor/alumnos/<int:personaje_id>/editar/', views.editar_alumno, name='editar_alumno'),
 
 ]
 

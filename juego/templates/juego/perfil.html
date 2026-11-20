@@ -1,0 +1,87 @@
+{% extends 'juego/base.html' %}
+
+{% block title %}Mi Perfil - Aula Gamificada{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 850px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-dark text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                <i class="bi {{ personaje.avatar|default:'bi-person-circle' }} fs-2"></i>
+            </div>
+            <div>
+                <h2 class="mb-0">Mi Perfil</h2>
+                <span class="text-muted small">
+                    Usuario: <strong>{{ request.user.username }}</strong>
+                    {% if personaje and personaje.clase %} · Clase: <strong>{{ personaje.clase.nombre }}</strong>{% endif %}
+                </span>
+            </div>
+        </div>
+
+        {% if es_profesor %}
+            <a href="{% url 'gestion_alumnos' %}" class="btn btn-primary">
+                <i class="bi bi-people-fill me-1"></i>Gestionar Alumnos y Contraseñas
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        <!-- Datos personales y avatar -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-person-lines-fill me-2 text-primary"></i>Datos de la cuenta
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in perfil_form %}
+                            <div class="mb-3">
+                                <label class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+                            </div>
+                        {% endfor %}
+
+                        {% if avatar_form %}
+                            <div class="mb-3">
+                                <label class="form-label">{{ avatar_form.avatar.label }}</label>
+                                {{ avatar_form.avatar }}
+                            </div>
+                        {% endif %}
+
+                        <button type="submit" name="guardar_datos" class="btn btn-success w-100">
+                            <i class="bi bi-check-lg me-1"></i>Guardar cambios
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cambio de contraseña -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-shield-lock-fill me-2 text-warning"></i>Cambiar mi contraseña
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in password_form %}
+                            <div class="mb-3">
+                                <label class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <button type="submit" name="cambiar_password" class="btn btn-dark w-100">
+                            <i class="bi bi-key me-1"></i>Actualizar contraseña
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

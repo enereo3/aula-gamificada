@@ -1,23 +1,26 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Alumnos - EduFinanzas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        body { background-color: #f4f6f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .card-login { border-radius: 15px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-    </style>
-</head>
-<body>
+{% extends 'juego/base.html' %}
 
+{% block title %}Iniciar Sesión - Aula Gamificada{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-login {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 400px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center py-5" style="min-height: 75vh;">
     <div class="card card-login p-4 bg-white">
         <div class="text-center mb-4">
             <i class="bi bi-wallet2 text-success display-4"></i>
-            <h4 class="fw-bold mt-2">EduFinanzas 1º ESO</h4>
-            <p class="text-muted small">Ingresa tus credenciales para acceder a tu personaje</p>
+            <h4 class="fw-bold mt-2">Aula Gamificada</h4>
+            <p class="text-muted small">Ingresa tus credenciales para acceder a tu cuenta</p>
         </div>
 
         {% if form.errors %}
@@ -49,6 +52,5 @@
             </button>
         </form>
     </div>
-
-</body>
-</html>
+</div>
+{% endblock %}
